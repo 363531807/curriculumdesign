@@ -1,4 +1,4 @@
-package com.a363531807.curriculumdesign;
+package com.a363531807.teacherclient;
 
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
+        getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 

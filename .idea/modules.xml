@@ -2,8 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/curriculumdesign.iml" filepath="$PROJECT_DIR$/curriculumdesign.iml" />
+      <module fileurl="file://$PROJECT_DIR$/studentclient/studentclient.iml" filepath="$PROJECT_DIR$/studentclient/studentclient.iml" />
+      <module fileurl="file://$PROJECT_DIR$/teacherclient/teacherclient.iml" filepath="$PROJECT_DIR$/teacherclient/teacherclient.iml" />
     </modules>
   </component>
 </project>
