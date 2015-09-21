@@ -16,6 +16,11 @@ import android.view.MenuItem;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    public static final String HOST="http://registersystem.sinaapp.com/registersystem/";
+    public static final String TAG ="stqbill";
+    public static final String USER_TYPE  = "1"; //1代表教师；
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
