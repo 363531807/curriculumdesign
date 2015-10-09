@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+<LinearLayout android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:orientation="horizontal">
+    <TextView android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:id="@+id/tv_course_name"
+              android:layout_weight="1"
+              android:text="刘劲松附近送"
+              android:gravity="center"
+        />
+    <TextView android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:id="@+id/tv_course_time"
+              android:layout_weight="1"
+              android:text="刘劲松附近送"
+              android:gravity="center"
+        />
+    <TextView android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:id="@+id/tv_course_position"
+              android:layout_weight="1"
+              android:text="刘劲松附近送"
+              android:gravity="center"
+        />
+</LinearLayout>
+<LinearLayout android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:orientation="horizontal">
+    <TextView android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_weight="1"
+              android:text="按时签到随机码："
+              android:gravity="center"
+        />
+    <TextView android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:id="@+id/tv_ontime_sign"
+              android:layout_weight="1"
+              android:text="未生成"
+              android:gravity="center"
+        />
+</LinearLayout>
+<LinearLayout android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:orientation="horizontal">
+    <TextView android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_weight="1"
+              android:text="迟到签到随机码："
+              android:gravity="center"
+        />
+    <TextView android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:id="@+id/tv_late_sign"
+              android:layout_weight="1"
+              android:text="未生成"
+              android:gravity="center"
+        />
+</LinearLayout>
+<LinearLayout android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:orientation="horizontal"
+    >
+    <TextView android:layout_width="0dp"
+              android:layout_height="wrap_content"
+              android:text="登记总人数："
+              android:gravity="center"
+              android:layout_weight="2"
+        />
+    <TextView android:layout_width="0dp"
+              android:layout_height="wrap_content"
+              android:text=""
+              android:layout_weight="1"
+              android:gravity="center"
+              android:id="@+id/tv_total_sign"
+        />
+    <TextView android:layout_width="0dp"
+              android:layout_height="wrap_content"
+              android:text="未登记人数："
+              android:gravity="center"
+              android:layout_weight="2"
+        />
+    <TextView android:layout_width="0dp"
+              android:layout_height="wrap_content"
+              android:text=""
+              android:layout_weight="1"
+              android:gravity="center"
+              android:id="@+id/tv_total_unsign"
+        />
+</LinearLayout>
+<LinearLayout android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:orientation="horizontal"
+    >
+    <TextView android:layout_width="0dp"
+              android:layout_height="wrap_content"
+              android:text="按时："
+              android:gravity="center"
+              android:layout_weight="2"
+        />
+    <TextView android:layout_width="0dp"
+              android:layout_height="wrap_content"
+              android:text=""
+              android:layout_weight="1"
+              android:gravity="center"
+              android:id="@+id/tv_ontime_num"
+        />
+    <TextView android:layout_width="0dp"
+              android:layout_height="wrap_content"
+              android:text="迟到："
+              android:gravity="center"
+              android:layout_weight="2"
+        />
+    <TextView android:layout_width="0dp"
+              android:layout_height="wrap_content"
+              android:text=""
+              android:layout_weight="1"
+              android:gravity="center"
+              android:id="@+id/tv_late_num"
+        />
+    <TextView android:layout_width="0dp"
+              android:layout_height="wrap_content"
+              android:text="请假："
+              android:gravity="center"
+              android:layout_weight="2"
+        />
+    <TextView android:layout_width="0dp"
+              android:layout_height="wrap_content"
+              android:text=""
+              android:layout_weight="1"
+              android:gravity="center"
+              android:id="@+id/tv_leave_num"
+        />
+</LinearLayout>
+
+
+
+</LinearLayout>

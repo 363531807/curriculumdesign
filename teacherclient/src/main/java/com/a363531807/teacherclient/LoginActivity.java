@@ -1,4 +1,4 @@
-package com.a363531807.curriculumdesign;
+package com.a363531807.teacherclient;
 
 
 import android.animation.Animator;

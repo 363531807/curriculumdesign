@@ -1,4 +1,4 @@
-package com.a363531807.curriculumdesign;
+package com.a363531807.teacherclient;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
