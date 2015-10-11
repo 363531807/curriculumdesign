@@ -14,16 +14,16 @@ import java.util.Map;
  * Created by 363531807 on 2015/9/26.
  */
 public class CourseListAdapter extends BaseExpandableListAdapter{
-    List<Map<String,String>> mMapList;
-    List<List<Map<String,String>>> mChild;
+    List<Map> mMapList;
+    List<List<Map>> mChild;
     Context mContext;
-    public CourseListAdapter(Context context, List<Map<String,String>> group,
-                             List<List<Map<String,String>>> child){
+    public CourseListAdapter(Context context, List<Map> group,
+                             List<List<Map>> child){
         mMapList = group;
         mChild =child;
         mContext = context;
     }
-    public void updateList(List<Map<String,String>> group,List<List<Map<String,String>>> child){
+    public void updateList(List<Map> group,List<List<Map>> child){
         mMapList = group;
         mChild =child;
         notifyDataSetChanged();
@@ -42,12 +42,12 @@ public class CourseListAdapter extends BaseExpandableListAdapter{
 
     @Override
     public Object getGroup(int groupPosition) {
-        return null;
+        return mMapList.get(groupPosition);
     }
 
     @Override
     public Object getChild(int groupPosition, int childPosition) {
-        return null;
+        return mChild.get(groupPosition).get(childPosition);
     }
 
     @Override
@@ -69,7 +69,7 @@ public class CourseListAdapter extends BaseExpandableListAdapter{
     public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
         ViewGroupHolder mHolder;
         if (convertView == null){
-            convertView = LayoutInflater.from(mContext).inflate(R.layout.course_list_item,null);
+            convertView = LayoutInflater.from(mContext).inflate(R.layout.course_list_group_item,null);
             mHolder = new ViewGroupHolder();
             mHolder.course_name = (TextView)convertView.findViewById(R.id.tv_course_name);
             mHolder.course_time= (TextView)convertView.findViewById(R.id.tv_course_time);
@@ -81,12 +81,14 @@ public class CourseListAdapter extends BaseExpandableListAdapter{
             mHolder.ontime_num = (TextView)convertView.findViewById(R.id.tv_ontime_num);
             mHolder.leave_num = (TextView)convertView.findViewById(R.id.tv_leave_num);
             mHolder.late_num = (TextView)convertView.findViewById(R.id.tv_late_num);
+            mHolder.classes = (TextView)convertView.findViewById(R.id.tv_course_class);
             convertView.setTag(mHolder);
         }else mHolder = (ViewGroupHolder)convertView.getTag();
-        Map<String,String> _map = mMapList.get(groupPosition);
+        Map<String,String> _map =  mMapList.get(groupPosition);
         mHolder.course_name.setText(_map.get("course_name"));
         mHolder.course_time.setText(_map.get("course_time"));
         mHolder.position.setText(_map.get("position"));
+        mHolder.classes.setText(_map.get("classes"));
         if(_map.containsKey("on_random")){
             mHolder.on_random.setText(_map.get("on_random"));
         }
@@ -98,15 +100,47 @@ public class CourseListAdapter extends BaseExpandableListAdapter{
         mHolder.ontime_num.setText(_map.get("ontime_num"));
         mHolder.leave_num.setText(_map.get("leave_num"));
         mHolder.late_num.setText(_map.get("late_num"));
+
         return convertView;
     }
 
     @Override
     public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
-                if(convertView==null){
+        ViewChildHolder viewChildHolder;
+        if(convertView==null){
+            convertView = LayoutInflater.from(mContext).inflate(R.layout.course_list_child_item,null);
+            viewChildHolder=new ViewChildHolder();
+            viewChildHolder.signType = (TextView)convertView.findViewById(R.id.tv_student_sign_type);
+            viewChildHolder.student_name = (TextView)convertView.findViewById(R.id.tv_student_name);
+            convertView.setTag(viewChildHolder);
+        }else viewChildHolder = (ViewChildHolder)convertView.getTag();
+        Map<String,String> map = mChild.get(groupPosition).get(childPosition);
+        viewChildHolder.student_name.setText(map.get("student_name"));
+        if (map.containsKey("isSign")) {
+            String _signtye = "";
+            switch (Integer.parseInt(map.get("isSign"))) {
+                case 0:
+                    _signtye = "未标记";
+                    break;
+                case 1:
+                    _signtye = "已签到";
+                    break;
+                case 2:
+                    _signtye = "迟到";
+                    break;
+                case 3:
+                    _signtye = "请假";
+                    break;
+                case 4:
+                    _signtye = "缺勤";
+                    break;
+            }
+            viewChildHolder.signType.setText(_signtye);
+        }else{
+            viewChildHolder.signType.setText("未标记");
+        }
 
-                }
-        return null;
+        return convertView;
     }
 
     @Override
@@ -126,5 +160,10 @@ public class CourseListAdapter extends BaseExpandableListAdapter{
         TextView ontime_num;
         TextView leave_num;
         TextView late_num;
+        TextView classes;
+    }
+    class ViewChildHolder{
+        TextView student_name;
+        TextView signType;
     }
 }

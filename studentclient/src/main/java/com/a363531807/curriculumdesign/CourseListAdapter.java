@@ -32,7 +32,7 @@ public class CourseListAdapter extends BaseAdapter{
 
     @Override
     public Object getItem(int position) {
-        return (mMapList.get(position)).get("course_name");
+        return (mMapList.get(position));
     }
 
     @Override
@@ -44,7 +44,7 @@ public class CourseListAdapter extends BaseAdapter{
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder mHolder;
         if (convertView == null){
-            convertView = LayoutInflater.from(mContext).inflate(R.layout.course_list_group_item,null);
+            convertView = LayoutInflater.from(mContext).inflate(R.layout.course_list_item,null);
              mHolder = new ViewHolder();
             mHolder.course_name = (TextView)convertView.findViewById(R.id.tv_course_name);
             mHolder.course_time= (TextView)convertView.findViewById(R.id.tv_course_time);

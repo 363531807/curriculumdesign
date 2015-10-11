@@ -4,8 +4,10 @@ package com.a363531807.teacherclient;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -126,6 +128,14 @@ public class LoginActivity extends AppCompatActivity {
             _editor.commit();
         }
     }
+    private boolean isOpenNetwork() {
+        ConnectivityManager connManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        if(connManager.getActiveNetworkInfo() != null) {
+            return connManager.getActiveNetworkInfo().isAvailable();
+        }
+
+        return false;
+    }
 
     /**
      * Attempts to sign in or register the account specified by the login form.
@@ -136,6 +146,13 @@ public class LoginActivity extends AppCompatActivity {
         if (mAuthTask != null) {
             return;
         }
+
+        //check NETWORK
+        if (!isOpenNetwork()){
+            Toast.makeText(this,"网络连接失败，请检查网络。",Toast.LENGTH_SHORT).show();
+            return;
+        }
+
 
         // Reset errors.
         mAccountView.setError(null);

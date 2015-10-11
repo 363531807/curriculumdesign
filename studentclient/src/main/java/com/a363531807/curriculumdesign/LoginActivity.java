@@ -4,8 +4,10 @@ package com.a363531807.curriculumdesign;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -51,7 +53,6 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         SharedPreferences _sp = getPreferences(MODE_PRIVATE);
-
         // Set up the login form.
         mAccountView = (EditText) findViewById(R.id.account);
         mPasswordView = (EditText) findViewById(R.id.password);
@@ -76,33 +77,44 @@ public class LoginActivity extends AppCompatActivity {
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
-        mMarkAccount = (CheckBox)findViewById(R.id.mark_account);
-        mAutoLogin = (CheckBox)findViewById(R.id.auto_login);
+        mMarkAccount = (CheckBox) findViewById(R.id.mark_account);
+        mAutoLogin = (CheckBox) findViewById(R.id.auto_login);
         mAutoLogin.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked&&!mMarkAccount.isChecked()){
-                mMarkAccount.setChecked(true);
+                if (isChecked && !mMarkAccount.isChecked()) {
+                    mMarkAccount.setChecked(true);
                 }
             }
         });
         mMarkAccount.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (!isChecked&&mAutoLogin.isChecked()){
+                if (!isChecked && mAutoLogin.isChecked()) {
                     mMarkAccount.setChecked(false);
                 }
             }
         });
-        if(_sp.contains("markaccount")){
-            if (_sp.getBoolean("markaccount",false)){
-                mAccountView.setText(_sp.getString("account",""));
+        if (_sp.contains("markaccount")) {
+            if (_sp.getBoolean("markaccount", false)) {
+                mAccountView.setText(_sp.getString("account", ""));
                 mPasswordView.setText(_sp.getString("password", ""));
                 mMarkAccount.setChecked(true);
-                mAutoLogin.setChecked(_sp.getBoolean("autologin",false));
+                mAutoLogin.setChecked(_sp.getBoolean("autologin", false));
             }
         }
+    }
+    /**
+     * 对网络连接状态进行判断
+     * @return  true, 可用； false， 不可用
+     */
+    private boolean isOpenNetwork() {
+        ConnectivityManager connManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        if(connManager.getActiveNetworkInfo() != null) {
+            return connManager.getActiveNetworkInfo().isAvailable();
+        }
 
+        return false;
     }
 
     @Override
@@ -134,6 +146,11 @@ public class LoginActivity extends AppCompatActivity {
      */
     private void attemptLogin() {
         if (mAuthTask != null) {
+            return;
+        }
+        //check NETWORK
+        if (!isOpenNetwork()){
+            Toast.makeText(this,"网络连接失败，请检查网络。",Toast.LENGTH_SHORT).show();
             return;
         }
 

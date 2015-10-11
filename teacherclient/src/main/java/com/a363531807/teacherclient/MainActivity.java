@@ -1,7 +1,6 @@
 package com.a363531807.teacherclient;
 
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
@@ -15,7 +14,6 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -40,15 +38,14 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener{
     //public static final String HOST="http://registersystem.sinaapp.com/registersystem/";
-    public static final String HOST="http://10.10.164.195:8000/registersystem/";
+    public static final String HOST="http://10.10.164.200:8000/registersystem/";
     public static final String TAG ="stqbill";
     public static final String USER_TYPE  = "1"; //1代表教师；
     public static final int LOGIN_RESULT_CODE =11;
-    private String mIMEI;
-    private String mIMSI;
     private String mAccount;
     private CourseListAdapter mListAdapter;
-    private List mCourseList;
+    private List<Map> mGroupList;
+    private List<List<Map>> mChildList;
     private ExpandableListView mCourselv;
     private MyHandler mMyHandler;
     private SwipeRefreshLayout  mSwipeRefreshLayout;
@@ -58,14 +55,6 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         mAccount=getIntent().getStringExtra("account");
         mMyHandler = new MyHandler();
-        Log.i(TAG, mAccount);
-        TelephonyManager _te = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-        mIMEI = _te.getDeviceId();
-        mIMSI = _te.getSubscriberId();
-        if(mIMSI ==null){
-            Toast.makeText(this,"请检查您的SIM卡是否插入",Toast.LENGTH_LONG).show();
-            finish();
-        }
         initView();
         getResoursefromInternet();
     }
@@ -110,7 +99,7 @@ public class MainActivity extends AppCompatActivity
         });
 
         mCourselv = (ExpandableListView)findViewById(R.id.lv_course_view);
-        mCourselv.setOnItemLongClickListener(new SignLvOnItemLongClickListener());
+//        mCourselv.setOnItemLongClickListener(new SignLvOnItemLongClickListener());
 
     }
     public void getResoursefromInternet(){
@@ -120,19 +109,22 @@ public class MainActivity extends AppCompatActivity
         new Thread(new CourseListRunable()).start();
     }
 
-    public List getCourseList(){
-        String _url = HOST+"getcourselist/";
+    public void getCourseList(){
+        String _url = HOST+"getteachlist/";
         try {
-            List _resultlist = new ArrayList();
             JSONObject _js = new JSONObject();
             _js.put("account", mAccount);
             String _result= HttpURLProtocol.postjson(_url, _js.toString().getBytes());
-            JSONArray _jsarray = new JSONArray(_result);
-            if(_jsarray.optString(0).equals("ok")){
-                int length = _jsarray.length();
+
+            JSONArray jsarray = new JSONArray(_result);
+            if(jsarray.optInt(0)==1){
+                List<Map> grouplist = new ArrayList<>();
+                List<List<Map>> _childmainlist = new ArrayList<>();
+                int length = jsarray.length();
                 for (int i=1;i<length;i++){
-                    Map _map = new HashMap();
-                    _js =   _jsarray.optJSONObject(i);
+                    Map<String,String> _map = new HashMap<>();
+                    _js =   jsarray.optJSONObject(i);
+                    Log.i(TAG,_js.toString());
                     Iterator _it = _js.keys();
                     String _key;
                     while (_it.hasNext()){
@@ -140,15 +132,34 @@ public class MainActivity extends AppCompatActivity
                         _map.put(_key,_js.optString(_key));
                     }
                     if (!_map.isEmpty()){
-                        _resultlist.add(_map);
+                        JSONArray _childarray = new JSONArray(_map.get("sign_student"));
+                        _map.remove("sign_student");
+                        List<Map> childlist = new ArrayList<>();
+                        int clength =_childarray.length();
+                        for (int j=0;j<clength;j++){
+                            JSONObject chilobj = _childarray.optJSONObject(j);
+                            Iterator chilit = chilobj.keys();
+                            Map<String,String> chmap=new HashMap<>();
+                            String chilkey;
+                            while (chilit.hasNext()){
+                                chilkey=(String)chilit.next();
+                                chmap.put(chilkey,chilobj.optString(chilkey));
+                            }
+                            if (!chmap.isEmpty()){
+                                childlist.add(chmap);
+                            }
+                        }
+                        grouplist.add(_map);
+                        _childmainlist.add(childlist);
                     }
                 }
+                mChildList=_childmainlist;
+                mGroupList=grouplist;
             }
-            return _resultlist;
+
         }  catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
     }
 
     @Override
@@ -211,8 +222,8 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         public void run() {
-            mCourseList = getCourseList();
-            if(mCourseList!=null&&!mCourseList.isEmpty())
+            getCourseList();
+            if(mGroupList !=null&&!mGroupList.isEmpty()&&mChildList!=null&&!mChildList.isEmpty())
                 mMyHandler.sendEmptyMessage(1);
             else mMyHandler.sendEmptyMessage(0);
         }
@@ -230,10 +241,10 @@ public class MainActivity extends AppCompatActivity
                     break;
                 case 1:
                     if (mListAdapter==null){
-                        mListAdapter=new CourseListAdapter(MainActivity.this,mCourseList);
+                        mListAdapter=new CourseListAdapter(MainActivity.this,mGroupList,mChildList);
                         mCourselv.setAdapter(mListAdapter);
                     }else {
-                        mListAdapter.updateList(mCourseList);
+                        mListAdapter.updateList(mGroupList,mChildList);
                     }
                     if(mSwipeRefreshLayout.isRefreshing()){
                         mSwipeRefreshLayout.setRefreshing(false);
@@ -267,7 +278,7 @@ public class MainActivity extends AppCompatActivity
     class SignLvOnItemLongClickListener implements AdapterView.OnItemLongClickListener{
         @Override
         public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-            Map _item = (Map) mCourseList.get(position);
+            Map _item =  mGroupList.get(position);
             if (_item.containsKey("isSign")&&!_item.get("isSign").equals("0")){
                 Toast.makeText(MainActivity.this,"您已签到!",Toast.LENGTH_SHORT).show();
                 return false;
@@ -314,15 +325,13 @@ public class MainActivity extends AppCompatActivity
     String signCourse(String radom,int signtype,int position) {
         String _url = HOST + "studentSign/";
         try {
-            Map _item = (Map) mCourseList.get(position);
+            Map _item = (Map) mGroupList.get(position);
             JSONObject _js = new JSONObject();
             _js.put("sign_type", ""+signtype);
             _js.put("random_number", radom);
             _js.put("classing_id", _item.get("classing_id"));
             _js.put("account", mAccount);
-            _js.put("imei", mIMEI);
-            _js.put("imsi", mIMSI);
-            if (_item.containsKey("afclass_id")) {
+                   if (_item.containsKey("afclass_id")) {
                 _js.put("afclass_id", _item.get("afclass_id"));
             }
             return  HttpURLProtocol.postjson(_url, _js.toString().getBytes());
