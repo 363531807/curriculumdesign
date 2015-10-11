@@ -92,7 +92,7 @@ public class HttpURLProtocol {
         }
         outstream.close();
         conn.disconnect();
-        return "false";
+        return "error";
     }
 
 

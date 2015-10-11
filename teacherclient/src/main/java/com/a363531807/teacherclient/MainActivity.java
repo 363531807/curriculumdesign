@@ -5,9 +5,7 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -15,6 +13,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -62,20 +61,6 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                Toast.makeText(MainActivity.this, "dffff", Toast.LENGTH_SHORT).show();
-                            }
-                        }).show();
-            }
-        });
-
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -99,7 +84,13 @@ public class MainActivity extends AppCompatActivity
         });
 
         mCourselv = (ExpandableListView)findViewById(R.id.lv_course_view);
-//        mCourselv.setOnItemLongClickListener(new SignLvOnItemLongClickListener());
+        mCourselv.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
+            @Override
+            public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+                menu.add("dfsd");
+                menu.add("dff");
+            }
+        });
 
     }
     public void getResoursefromInternet(){
@@ -109,13 +100,15 @@ public class MainActivity extends AppCompatActivity
         new Thread(new CourseListRunable()).start();
     }
 
-    public void getCourseList(){
+    public boolean getCourseList(){
         String _url = HOST+"getteachlist/";
         try {
             JSONObject _js = new JSONObject();
             _js.put("account", mAccount);
             String _result= HttpURLProtocol.postjson(_url, _js.toString().getBytes());
-
+            if (_result.equals("error")){
+                return false;
+            }
             JSONArray jsarray = new JSONArray(_result);
             if(jsarray.optInt(0)==1){
                 List<Map> grouplist = new ArrayList<>();
@@ -155,11 +148,12 @@ public class MainActivity extends AppCompatActivity
                 }
                 mChildList=_childmainlist;
                 mGroupList=grouplist;
+                return true;
             }
-
         }  catch (Exception e) {
             e.printStackTrace();
         }
+        return false;
     }
 
     @Override
@@ -218,14 +212,17 @@ public class MainActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
-    class CourseListRunable implements Runnable{
+    class CourseListRunable implements Runnable {
 
         @Override
         public void run() {
-            getCourseList();
-            if(mGroupList !=null&&!mGroupList.isEmpty()&&mChildList!=null&&!mChildList.isEmpty())
-                mMyHandler.sendEmptyMessage(1);
-            else mMyHandler.sendEmptyMessage(0);
+            if (getCourseList()) {
+                if (mGroupList != null && !mGroupList.isEmpty() && mChildList != null && !mChildList.isEmpty()) {
+                    mMyHandler.sendEmptyMessage(1);
+                } else mMyHandler.sendEmptyMessage(0);
+            } else {
+                mMyHandler.sendEmptyMessage(0);
+            }
         }
     }
     class MyHandler extends Handler{
