@@ -3,6 +3,7 @@ package com.a363531807.curriculumdesign;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -46,7 +47,7 @@ public class MainActivity extends AppCompatActivity
     private String mIMSI;
     private String mAccount;
     private  CourseListAdapter mListAdapter;
-    private List mCourseList;
+    private List<Map> mCourseList;
     private ListView mCourselv;
     private MyHandler mMyHandler;
     private SwipeRefreshLayout  mSwipeRefreshLayout;
@@ -65,7 +66,12 @@ public class MainActivity extends AppCompatActivity
             finish();
         }
         initView();
-        getResoursefromInternet();
+        mMyHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                getResoursefromInternet();
+            }
+        }, 1000);
     }
     private void initView(){
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -89,7 +95,14 @@ public class MainActivity extends AppCompatActivity
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                new Thread(new CourseListRunable()).start();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        synchronized (this){
+                            getCourseList();
+                        }
+                    }
+                }).start();
             }
         });
 
@@ -101,10 +114,17 @@ public class MainActivity extends AppCompatActivity
         if(!mSwipeRefreshLayout.isRefreshing()){
             mSwipeRefreshLayout.setRefreshing(true);
         }
-        new Thread(new CourseListRunable()).start();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (this){
+                getCourseList();
+                }
+            }
+        }).start();
     }
 
-    public List getCourseList(){
+    public void getCourseList(){
         String _url = HOST+"getcourselist/";
         try {
             List _resultlist = new ArrayList();
@@ -123,16 +143,19 @@ public class MainActivity extends AppCompatActivity
                         _key = (String)_it.next();
                         _map.put(_key,_js.optString(_key));
                     }
-                   if (!_map.isEmpty()){
-                       _resultlist.add(_map);
-                   }
+                    if (!_map.isEmpty()){
+                        _resultlist.add(_map);
+                    }
                 }
+                mCourseList=_resultlist;
+                mMyHandler.sendEmptyMessage(1);
+                return ;
             }
-            return _resultlist;
+
         }  catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+        mMyHandler.sendEmptyMessage(0);
     }
 
     @Override
@@ -163,6 +186,12 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.action_settings) {
             return true;
         }
+        if(id == R.id.action_sign_out ){
+            Intent intent = new Intent(this,LoginActivity.class);
+            intent.putExtra("auto_login",false);
+            startActivity(intent);
+            finish();
+        }
 
         return super.onOptionsItemSelected(item);
     }
@@ -191,16 +220,7 @@ public class MainActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
-    class CourseListRunable implements Runnable{
 
-        @Override
-        public void run() {
-            mCourseList = getCourseList();
-            if(mCourseList!=null&&!mCourseList.isEmpty())
-                mMyHandler.sendEmptyMessage(1);
-            else mMyHandler.sendEmptyMessage(0);
-        }
-    }
     class MyHandler extends Handler{
         @Override
         public void handleMessage(Message msg) {
@@ -242,7 +262,10 @@ public class MainActivity extends AppCompatActivity
                             break;
                         case 5:
                             showMsg("恭喜您签到成功！");
-                            getResoursefromInternet();
+                            Bundle bundle=msg.getData();
+                            mCourseList.get(bundle.getInt("position")).
+                                    put("isSign",bundle.getString("signtype"));
+                            mListAdapter.updateList(mCourseList);
                             break;
                     }
             }
@@ -328,15 +351,21 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         public void run() {
-          String result =   signCourse(mRadom,mSigntype,mPosition);
-            try{
-                JSONArray _ja=new JSONArray(result);
-                Message _ms =new Message();
-                _ms.what=3;
-                _ms.arg1=_ja.getInt(0);
-                mMyHandler.sendMessage(_ms);
-            }catch (Exception e){
-                e.printStackTrace();
+            synchronized (this) {
+                String result = signCourse(mRadom, mSigntype, mPosition);
+                try {
+                    JSONArray _ja = new JSONArray(result);
+                    Message _ms = new Message();
+                    Bundle bundle = new Bundle();
+                    bundle.putString("signtype",""+mSigntype);
+                    bundle.putInt("position", mPosition);
+                    _ms.setData(bundle);
+                    _ms.what = 3;
+                    _ms.arg1 = _ja.getInt(0);
+                    mMyHandler.sendMessage(_ms);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
     }

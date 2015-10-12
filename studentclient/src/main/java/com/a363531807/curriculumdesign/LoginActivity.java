@@ -95,14 +95,14 @@ public class LoginActivity extends AppCompatActivity {
                 }
             }
         });
-        if (_sp.contains("markaccount")) {
-            if (_sp.getBoolean("markaccount", false)) {
-                mAccountView.setText(_sp.getString("account", ""));
-                mPasswordView.setText(_sp.getString("password", ""));
-                mMarkAccount.setChecked(true);
-                mAutoLogin.setChecked(_sp.getBoolean("autologin", false));
-            }
+
+        if (_sp.getBoolean("markaccount", false)) {
+            mAccountView.setText(_sp.getString("account", ""));
+            mPasswordView.setText(_sp.getString("password", ""));
+            mMarkAccount.setChecked(true);
+            mAutoLogin.setChecked(_sp.getBoolean("autologin", false));
         }
+
     }
     /**
      * 对网络连接状态进行判断
@@ -120,7 +120,7 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onPostResume() {
         super.onPostResume();
-        if (mAutoLogin.isChecked()){
+        if ( getIntent().getBooleanExtra("auto_login",true)&&mAutoLogin.isChecked()){
                 attemptLogin();
         }
     }

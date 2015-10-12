@@ -18,4 +18,9 @@
     <string name="mark_account">记住用户名和密码</string>
     <string name="auto_login">自动登陆</string>
     <string name="login_succeed">登陆成功</string>
+    <string name="action_sign_out">注销</string>
+    <string name="reset_random_title">您确定要重置签到码？</string>
+    <string name="reset_random_msg">重置签到随机码会清除相对应学生签到记录，请谨慎使用！</string>
+    <string name="dialog_yes">确定</string>
+    <string name="dialog_cancel">取消</string>
 </resources>

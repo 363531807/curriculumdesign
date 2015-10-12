@@ -19,4 +19,5 @@
     <string name="mark_account">记住用户名和密码</string>
     <string name="auto_login">自动登陆</string>
     <string name="login_succeed">登陆成功</string>
+    <string name="action_sign_out">注销</string>
 </resources>

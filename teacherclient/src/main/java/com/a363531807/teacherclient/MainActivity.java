@@ -1,5 +1,7 @@
 package com.a363531807.teacherclient;
 
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -9,8 +11,10 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -30,17 +34,17 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener{
-    public static final String HOST="http://registersystem.sinaapp.com/registersystem/";
-    //public static final String HOST="http://10.10.164.200:8000/registersystem/";
+    //public static final String HOST="http://registersystem.sinaapp.com/registersystem/";
+    public static final String HOST="http://10.10.164.215:8000/registersystem/";
     public static final String TAG ="stqbill";
     public static final String USER_TYPE  = "1"; //1代表教师；
-    public static final int LOGIN_RESULT_CODE =11;
     private String mAccount;
     private CourseExpanListAdapter mListAdapter;
     private List<Map> mGroupList;
     private List<List<Map>> mChildList;
     private ExpandableListView mCourselv;
     private MyHandler mMyHandler;
+    private ProgressDialog mProgressDialog;
     private SwipeRefreshLayout  mSwipeRefreshLayout;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,7 +58,7 @@ public class MainActivity extends AppCompatActivity
             public void run() {
                 getResoursefromInternet();
             }
-        },500);
+        },1000);
 
     }
     private void initView(){
@@ -79,29 +83,38 @@ public class MainActivity extends AppCompatActivity
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                new Thread(new CourseListRunable()).start();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        getCourseList();
+                    }
+                }).start();
             }
         });
 
         mCourselv = (ExpandableListView)findViewById(R.id.lv_course_view);
         registerForContextMenu(mCourselv);
-
     }
     public void getResoursefromInternet(){
         if(!mSwipeRefreshLayout.isRefreshing()){
             mSwipeRefreshLayout.setRefreshing(true);
         }
-        new Thread(new CourseListRunable()).start();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                getCourseList();
+            }
+        }).start();
     }
 
-    public boolean getCourseList(){
+    public void getCourseList(){
         String _url = HOST+"getteachlist/";
         try {
             JSONObject _js = new JSONObject();
             _js.put("account", mAccount);
             String _result= HttpURLProtocol.postjson(_url, _js.toString().getBytes());
             if (_result.equals("error")){
-                return false;
+                mMyHandler.sendEmptyMessage(0);
             }
             JSONArray jsarray = new JSONArray(_result);
             if(jsarray.optInt(0)==1){
@@ -141,12 +154,13 @@ public class MainActivity extends AppCompatActivity
                 }
                 mChildList=_childmainlist;
                 mGroupList=grouplist;
-                return true;
+                mMyHandler.sendEmptyMessage(1);
+                return ;
             }
         }  catch (Exception e) {
             e.printStackTrace();
         }
-        return false;
+        mMyHandler.sendEmptyMessage(0);
     }
 
     @Override
@@ -187,28 +201,51 @@ public class MainActivity extends AppCompatActivity
             .setIntent(laintent);
         }
         menu.add(Menu.NONE,3,Menu.NONE,"处理请假申请");
-        menu.add(Menu.NONE,4,Menu.NONE,"缺勤名单");
+        menu.add(Menu.NONE, 4, Menu.NONE, "缺勤名单");
     }
 
     @Override
-    public boolean onContextItemSelected(MenuItem item) {
-        ExpandableListView.ExpandableListContextMenuInfo info=
+    public boolean onContextItemSelected(final MenuItem item) {
+        final ExpandableListView.ExpandableListContextMenuInfo info=
                 (ExpandableListView.ExpandableListContextMenuInfo)item.getMenuInfo();
         Intent intent;
         switch (item.getItemId()){
             case 1:
+            case 2:
                 intent=item.getIntent();
                 if (intent.getBooleanExtra("reset",false)){
+                    new AlertDialog.Builder(this)
+                            .setTitle(R.string.reset_random_title)
+                            .setMessage(R.string.reset_random_msg)
+                            .setPositiveButton(R.string.dialog_yes, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    final int position= (int) info.id;
+                                    final int signtype =1;
+                                    if(item.getItemId()==1){
+                                        new Thread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                setRamdom(signtype,position);
+                                            }
+                                        }).start();
+                                    }else{
+                                        //larandom
+                                    }
+                                }
+                            })
+                            .setNegativeButton(R.string.dialog_cancel,null)
+                            .show();
 
                 }
-                break;
-            case 2:
                 break;
             case 3:
                 break;
             case 4:
                 break;
             case 5:
+                break;
+            case 6:
                 break;
 
         }
@@ -234,6 +271,12 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
         if (id == R.id.action_settings) {
             return true;
+        }
+        if(id == R.id.action_sign_out ){
+            Intent intent = new Intent(this,LoginActivity.class);
+            intent.putExtra("auto_login",false);
+            startActivity(intent);
+            finish();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -262,27 +305,25 @@ public class MainActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
-
-
-
-    class CourseListRunable implements Runnable {
-
-        @Override
-        public void run() {
-            if (getCourseList()) {
-//                if (mGroupList != null && !mGroupList.isEmpty() && mChildList != null && !mChildList.isEmpty()) {
-//                    mMyHandler.sendEmptyMessage(1);
-//                } else mMyHandler.sendEmptyMessage(0);
-                mMyHandler.sendEmptyMessage(1);
-            } else {
-                mMyHandler.sendEmptyMessage(0);
+    public void ShowProgressDialog(boolean show,int type){
+        if (show){
+            switch (type){
+                case 0:
+                    mProgressDialog = ProgressDialog.show(this,"提示","正在拼命从服务器加载数据中……");
+                    break;
+                case 1:
+                    break;
             }
-        }
+        }else{
+            mProgressDialog.cancel();
+            }
+
     }
     class MyHandler extends Handler{
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
+
             switch (msg.what){
                 case 0:
                     if(mSwipeRefreshLayout.isRefreshing()){
@@ -304,6 +345,31 @@ public class MainActivity extends AppCompatActivity
 
             }
         }
+    }
+    public void setRamdom(int type,int position){
+        String url = HOST+"setrandom/";
+        try{
+            Map map = mGroupList.get(position);
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("classing_id", "" + map.get("classing_id"));
+            jsonObject.put("set_type", "" + type);
+            String result = HttpURLProtocol.postjson(url,jsonObject.toString().getBytes());
+            Log.i(TAG,result);
+            jsonObject = new JSONObject(result);
+            if (jsonObject.optBoolean("result")){
+                if(type==1) {
+                    map.put("on_random", jsonObject.optString("random"));
+                }else if(type==2){
+                    map.put("la_random", jsonObject.optString("random"));
+                }
+                mMyHandler.sendEmptyMessage(1);
+                return;
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            mMyHandler.sendEmptyMessage(0);
+        }
+        mMyHandler.sendEmptyMessage(0);
     }
 
     void showMsg(String msg){
