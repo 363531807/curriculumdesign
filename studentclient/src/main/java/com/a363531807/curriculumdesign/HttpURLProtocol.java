@@ -42,7 +42,7 @@ public class HttpURLProtocol {
         OutputStream outstream = conn.getOutputStream();
         outstream.write(entiy);
         outstream.flush();
-        if (true||conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+        if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
             InputStream instream = conn.getInputStream();
             ByteArrayOutputStream byteoutstream = new ByteArrayOutputStream();
             byte[] buffer = new byte[1024];
@@ -79,7 +79,7 @@ public class HttpURLProtocol {
         OutputStream outstream = conn.getOutputStream();
         outstream.write(json);
         outstream.flush();
-        if (true||conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+        if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
             InputStream instream = conn.getInputStream();
             ByteArrayOutputStream byteoutstream = new ByteArrayOutputStream();
             byte[] buffer = new byte[1024];

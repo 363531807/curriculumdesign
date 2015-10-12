@@ -13,12 +13,12 @@ import java.util.Map;
 /**
  * Created by 363531807 on 2015/9/26.
  */
-public class CourseListAdapter extends BaseExpandableListAdapter{
+public class CourseExpanListAdapter extends BaseExpandableListAdapter{
     List<Map> mMapList;
     List<List<Map>> mChild;
     Context mContext;
-    public CourseListAdapter(Context context, List<Map> group,
-                             List<List<Map>> child){
+    public CourseExpanListAdapter(Context context, List<Map> group,
+                                  List<List<Map>> child){
         mMapList = group;
         mChild =child;
         mContext = context;
@@ -112,10 +112,12 @@ public class CourseListAdapter extends BaseExpandableListAdapter{
             viewChildHolder=new ViewChildHolder();
             viewChildHolder.signType = (TextView)convertView.findViewById(R.id.tv_student_sign_type);
             viewChildHolder.student_name = (TextView)convertView.findViewById(R.id.tv_student_name);
+            viewChildHolder.sign_time=(TextView)convertView.findViewById(R.id.tv_student_sign_time);
             convertView.setTag(viewChildHolder);
         }else viewChildHolder = (ViewChildHolder)convertView.getTag();
         Map<String,String> map = mChild.get(groupPosition).get(childPosition);
         viewChildHolder.student_name.setText(map.get("student_name"));
+        viewChildHolder.sign_time.setText(map.get("sign_time"));
         if (map.containsKey("isSign")) {
             String _signtye = "";
             switch (Integer.parseInt(map.get("isSign"))) {
@@ -165,5 +167,6 @@ public class CourseListAdapter extends BaseExpandableListAdapter{
     class ViewChildHolder{
         TextView student_name;
         TextView signType;
+        TextView sign_time;
     }
 }
