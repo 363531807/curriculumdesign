@@ -236,7 +236,6 @@ public class MainActivity extends AppCompatActivity
                             })
                             .setNegativeButton(R.string.dialog_cancel,null)
                             .show();
-
                 }else {
                     showProgressDialog(true,0);
                     new Thread(new Runnable() {
@@ -250,7 +249,7 @@ public class MainActivity extends AppCompatActivity
             case 3:
                 break;
             case 4:
-                showProgressDialog(true,1);
+                showProgressDialog(true,0);
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
