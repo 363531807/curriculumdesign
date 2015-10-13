@@ -35,7 +35,7 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener{
     //public static final String HOST="http://registersystem.sinaapp.com/registersystem/";
-    public static final String HOST="http://10.10.164.215:8000/registersystem/";
+    public static final String HOST="http://10.10.164.194:8000/registersystem/";
     public static final String TAG ="stqbill";
     public static final String USER_TYPE  = "1"; //1代表教师；
     private String mAccount;
@@ -209,6 +209,7 @@ public class MainActivity extends AppCompatActivity
         final ExpandableListView.ExpandableListContextMenuInfo info=
                 (ExpandableListView.ExpandableListContextMenuInfo)item.getMenuInfo();
         Intent intent;
+        Log.i(TAG,"ID"+item.getItemId());
         switch (item.getItemId()){
             case 1:
             case 2:
@@ -221,17 +222,15 @@ public class MainActivity extends AppCompatActivity
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     final int position= (int) info.id;
-                                    final int signtype =1;
-                                    if(item.getItemId()==1){
-                                        new Thread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                setRamdom(signtype,position);
-                                            }
-                                        }).start();
-                                    }else{
-                                        //larandom
-                                    }
+                                    final int signtype =item.getItemId();
+                                    showProgressDialog(true,0);
+                                    new Thread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            setRamdom(signtype,position);
+                                        }
+                                    }).start();
+
                                 }
                             })
                             .setNegativeButton(R.string.dialog_cancel,null)
@@ -305,7 +304,7 @@ public class MainActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
-    public void ShowProgressDialog(boolean show,int type){
+    public void showProgressDialog(boolean show,int type){
         if (show){
             switch (type){
                 case 0:
@@ -315,7 +314,10 @@ public class MainActivity extends AppCompatActivity
                     break;
             }
         }else{
-            mProgressDialog.cancel();
+            if (mProgressDialog!=null&&mProgressDialog.isShowing()){
+                mProgressDialog.cancel();
+            }
+
             }
 
     }
@@ -329,6 +331,7 @@ public class MainActivity extends AppCompatActivity
                     if(mSwipeRefreshLayout.isRefreshing()){
                         mSwipeRefreshLayout.setRefreshing(false);
                     }
+                    showProgressDialog(false,0);
                     showMsg("更新失败");
                     break;
                 case 1:
@@ -342,6 +345,10 @@ public class MainActivity extends AppCompatActivity
                         mSwipeRefreshLayout.setRefreshing(false);
                     }
                     break;
+                case 2:
+                    showProgressDialog(false,0);
+                    getResoursefromInternet();
+
 
             }
         }
@@ -352,17 +359,12 @@ public class MainActivity extends AppCompatActivity
             Map map = mGroupList.get(position);
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("classing_id", "" + map.get("classing_id"));
-            jsonObject.put("set_type", "" + type);
+            jsonObject.put("set_type", "" +type);
             String result = HttpURLProtocol.postjson(url,jsonObject.toString().getBytes());
             Log.i(TAG,result);
             jsonObject = new JSONObject(result);
             if (jsonObject.optBoolean("result")){
-                if(type==1) {
-                    map.put("on_random", jsonObject.optString("random"));
-                }else if(type==2){
-                    map.put("la_random", jsonObject.optString("random"));
-                }
-                mMyHandler.sendEmptyMessage(1);
+                mMyHandler.sendEmptyMessage(2);
                 return;
             }
         }catch (Exception e){
