@@ -24,4 +24,6 @@
     <string name="dialog_yes">确定</string>
     <string name="dialog_cancel">取消</string>
     <string name="unsign_student_title">未登记名单</string>
+    <string name="show_random_title">随机码</string>
+    <string name="random_warning">该随机码仅10分钟内有效哦！</string>
 </resources>

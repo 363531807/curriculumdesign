@@ -15,6 +15,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.ContextMenu;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -361,6 +362,18 @@ public class MainActivity extends AppCompatActivity
                 case 2:
                     showProgressDialog(false, 0);
                     getResoursefromInternet();
+                    String random = msg.getData().getString("random");
+                    TextView tv = new TextView(MainActivity.this);
+                    tv.setText(random);
+                    tv.setTextColor(getResources().getColor(android.R.color.holo_orange_dark));
+                    tv.setTextSize(50);
+                    tv.setPadding(0,0,0,50);
+                    tv.setGravity(Gravity.CENTER);
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setTitle(R.string.show_random_title)
+                            .setView(tv)
+                            .setMessage(R.string.random_warning)
+                            .show();
                     break;
                 case 3:
                     showProgressDialog(false,0);
@@ -372,7 +385,7 @@ public class MainActivity extends AppCompatActivity
                     new AlertDialog.Builder(MainActivity.this)
                             .setTitle(R.string.unsign_student_title)
                             //.setView(lv)
-                            .setAdapter(adapter,null)
+                            .setAdapter(adapter, null)
                             .show();
             }
         }
@@ -386,7 +399,12 @@ public class MainActivity extends AppCompatActivity
             String result = HttpURLProtocol.postjson(url,jsonObject.toString().getBytes());
             jsonObject = new JSONObject(result);
             if (jsonObject.optBoolean("result")){
-                mMyHandler.sendEmptyMessage(2);
+                Message msg = new Message();
+                msg.what=2;
+                Bundle bundle = new Bundle();
+                bundle.putString("random",jsonObject.optString("random"));
+                msg.setData(bundle);
+                mMyHandler.sendMessage(msg);
                 return;
             }
         }catch (Exception e){
