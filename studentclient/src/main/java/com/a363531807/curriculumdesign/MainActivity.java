@@ -37,43 +37,40 @@ import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener{
-    public static final String HOST="http://registersystem.sinaapp.com/registersystem/";
+        implements NavigationView.OnNavigationItemSelectedListener {
+    public static final String HOST = "http://registersystem.sinaapp.com/registersystem/";
     //public static final String HOST="http://10.10.164.194:8000/registersystem/";
-    public static final String TAG ="stqbill";
-    public static final String USER_TYPE  = "0"; //0代表学生；
-    public static final int LOGIN_RESULT_CODE =11;
+    public static final String TAG = "stqbill";
+    public static final String USER_TYPE = "0"; //0代表学生；
+    public static final int LOGIN_RESULT_CODE = 11;
     private String mIMEI;
     private String mIMSI;
     private String mAccount;
-    private  CourseListAdapter mListAdapter;
+    private CourseListAdapter mListAdapter;
     private List<Map> mCourseList;
     private ListView mCourselv;
     private MyHandler mMyHandler;
-    private SwipeRefreshLayout  mSwipeRefreshLayout;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mAccount=getIntent().getStringExtra("account");
+        mAccount = getIntent().getStringExtra("account");
         mMyHandler = new MyHandler();
         Log.i(TAG, mAccount);
         TelephonyManager _te = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         mIMEI = _te.getDeviceId();
         mIMSI = _te.getSubscriberId();
-        if(mIMSI ==null){
-            Toast.makeText(this,"请检查您的SIM卡是否插入",Toast.LENGTH_LONG).show();
+        if (mIMSI == null) {
+            Toast.makeText(this, "请检查您的SIM卡是否插入", Toast.LENGTH_LONG).show();
             finish();
         }
         initView();
-        mMyHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                getResoursefromInternet();
-            }
-        }, 1000);
+        getResoursefromInternet();
     }
-    private void initView(){
+
+    private void initView() {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -85,11 +82,11 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-        TextView _user_name = (TextView)findViewById(R.id.tv_user_name);
+        TextView _user_name = (TextView) findViewById(R.id.tv_user_name);
         _user_name.setText("我的名字");
-        TextView  _user_sign = (TextView)findViewById(R.id.tv_user_sign);
+        TextView _user_sign = (TextView) findViewById(R.id.tv_user_sign);
         _user_sign.setText("我的签名");
-        mSwipeRefreshLayout = (SwipeRefreshLayout)findViewById(R.id.swipe_content_main);
+        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_content_main);
         //设置刷新时动画的颜色，可以设置4个
         mSwipeRefreshLayout.setColorSchemeResources(android.R.color.holo_blue_light, android.R.color.holo_red_light, android.R.color.holo_orange_light, android.R.color.holo_green_light);
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -98,7 +95,7 @@ public class MainActivity extends AppCompatActivity
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        synchronized (this){
+                        synchronized (this) {
                             getCourseList();
                         }
                     }
@@ -106,56 +103,61 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        mCourselv = (ListView)findViewById(R.id.lv_course_view);
+        mCourselv = (ListView) findViewById(R.id.lv_course_view);
         mCourselv.setOnItemLongClickListener(new SignLvOnItemLongClickListener());
 
     }
-    public void getResoursefromInternet(){
-        if(!mSwipeRefreshLayout.isRefreshing()){
+
+    public void getResoursefromInternet() {
+        if (!mSwipeRefreshLayout.isRefreshing()) {
             mSwipeRefreshLayout.setRefreshing(true);
         }
         new Thread(new Runnable() {
             @Override
             public void run() {
-                synchronized (this){
-                getCourseList();
+                synchronized (this) {
+                    getCourseList();
                 }
             }
         }).start();
     }
 
-    public void getCourseList(){
-        String _url = HOST+"getcourselist/";
+    public void getCourseList() {
+        String _url = HOST + "getcourselist/";
         try {
             List _resultlist = new ArrayList();
             JSONObject _js = new JSONObject();
             _js.put("account", mAccount);
-            String _result= HttpURLProtocol.postjson(_url, _js.toString().getBytes());
+            String _result = HttpURLProtocol.postjson(_url, _js.toString().getBytes());
+            if (_result.equals("error")) {
+                mMyHandler.sendEmptyMessage(0);
+            }
             JSONArray _jsarray = new JSONArray(_result);
-            if(_jsarray.optString(0).equals("ok")){
+            if (_jsarray.optString(0).equals("ok")) {
                 int length = _jsarray.length();
-                for (int i=1;i<length;i++){
+                for (int i = 1; i < length; i++) {
                     Map _map = new HashMap();
-                    _js =   _jsarray.optJSONObject(i);
+                    _js = _jsarray.optJSONObject(i);
                     Iterator _it = _js.keys();
                     String _key;
-                    while (_it.hasNext()){
-                        _key = (String)_it.next();
-                        _map.put(_key,_js.optString(_key));
+                    while (_it.hasNext()) {
+                        _key = (String) _it.next();
+                        _map.put(_key, _js.optString(_key));
                     }
-                    if (!_map.isEmpty()){
+                    if (!_map.isEmpty()) {
                         _resultlist.add(_map);
                     }
                 }
-                mCourseList=_resultlist;
+                mCourseList = _resultlist;
                 mMyHandler.sendEmptyMessage(1);
-                return ;
+                return;
             }
 
-        }  catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
+            mMyHandler.sendEmptyMessage(0);
         }
-        mMyHandler.sendEmptyMessage(0);
+
     }
 
     @Override
@@ -186,9 +188,9 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.action_settings) {
             return true;
         }
-        if(id == R.id.action_sign_out ){
-            Intent intent = new Intent(this,LoginActivity.class);
-            intent.putExtra("auto_login",false);
+        if (id == R.id.action_sign_out) {
+            Intent intent = new Intent(this, LoginActivity.class);
+            intent.putExtra("auto_login", false);
             startActivity(intent);
             finish();
         }
@@ -221,76 +223,80 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    class MyHandler extends Handler{
+    class MyHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            switch (msg.what){
+            switch (msg.what) {
                 case 0:
-                    if(mSwipeRefreshLayout.isRefreshing()){
+                    if (mSwipeRefreshLayout.isRefreshing()) {
                         mSwipeRefreshLayout.setRefreshing(false);
                     }
                     showMsg("更新失败");
                     break;
                 case 1:
-                    if (mListAdapter==null){
-                        mListAdapter=new CourseListAdapter(MainActivity.this,mCourseList);
+                    if (mListAdapter == null) {
+                        mListAdapter = new CourseListAdapter(MainActivity.this, mCourseList);
                         mCourselv.setAdapter(mListAdapter);
-                    }else {
+                    } else {
                         mListAdapter.updateList(mCourseList);
                     }
-                    if(mSwipeRefreshLayout.isRefreshing()){
+                    if (mSwipeRefreshLayout.isRefreshing()) {
                         mSwipeRefreshLayout.setRefreshing(false);
                     }
                     break;
                 case 3:
-                    switch (msg.arg1){
+                    switch (msg.arg1) {
                         case 0:
-                            showMsg("现在还不能签到哦！");
+                            showMsg("只能在校园网中进行签到哦！");
                             break;
                         case 1:
-                            showMsg("您的签到密码有误哦！待会重试吧！");
+                            showMsg("现在还不能签到哦！");
                             break;
                         case 2:
-                            showMsg("您的签到密码已超过有效期！");
+                            showMsg("您的签到密码有误哦！待会重试吧！");
                             break;
                         case 3:
-                            showMsg("该设备已被其他用户使用！");
+                            showMsg("您的签到密码已超过有效期！");
                             break;
                         case 4:
-                            showMsg("该SIM卡已被其他用户使用！");
+                            showMsg("该设备已被其他用户使用！");
                             break;
                         case 5:
+                            showMsg("该SIM卡已被其他用户使用！");
+                            break;
+                        case 6:
                             showMsg("恭喜您签到成功！");
-                            Bundle bundle=msg.getData();
+                            Bundle bundle = msg.getData();
                             mCourseList.get(bundle.getInt("position")).
-                                    put("isSign",bundle.getString("signtype"));
+                                    put("isSign", bundle.getString("signtype"));
                             mListAdapter.updateList(mCourseList);
                             break;
                     }
             }
         }
     }
-    class SignLvOnItemLongClickListener implements AdapterView.OnItemLongClickListener{
+
+    class SignLvOnItemLongClickListener implements AdapterView.OnItemLongClickListener {
         @Override
         public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
             Map _item = (Map) mCourseList.get(position);
-            if (_item.containsKey("isSign")&&!_item.get("isSign").equals("0")){
-                Toast.makeText(MainActivity.this,"您已签到!",Toast.LENGTH_SHORT).show();
+            if (_item.containsKey("isSign") && !_item.get("isSign").equals("0")) {
+                Toast.makeText(MainActivity.this, "您已签到!", Toast.LENGTH_SHORT).show();
                 return false;
             }
-            View _view = LayoutInflater.from(MainActivity.this).inflate(R.layout.sign_dialog_layout,null);
+            View _view = LayoutInflater.from(MainActivity.this).inflate(R.layout.sign_dialog_layout, null);
             final NumberPicker[] numberPickers = new NumberPicker[4];
-            numberPickers[0]= (NumberPicker)_view.findViewById(R.id.numberPicker1);
-            numberPickers[1]= (NumberPicker)_view.findViewById(R.id.numberPicker2);
-            numberPickers[2]= (NumberPicker)_view.findViewById(R.id.numberPicker3);
-            numberPickers[3]= (NumberPicker)_view.findViewById(R.id.numberPicker4);
-            for (NumberPicker picker:numberPickers) {
+            numberPickers[0] = (NumberPicker) _view.findViewById(R.id.numberPicker1);
+            numberPickers[1] = (NumberPicker) _view.findViewById(R.id.numberPicker2);
+            numberPickers[2] = (NumberPicker) _view.findViewById(R.id.numberPicker3);
+            numberPickers[3] = (NumberPicker) _view.findViewById(R.id.numberPicker4);
+            for (NumberPicker picker : numberPickers) {
                 picker.setMaxValue(9);
                 picker.setMinValue(0);
                 picker.setValue(0);
             }
-            final RadioGroup radioGroup = (RadioGroup)_view.findViewById(R.id.radiogroup_sign);
+            final RadioGroup radioGroup = (RadioGroup) _view.findViewById(R.id.radiogroup_sign);
             final int _position = position;
             new AlertDialog.Builder(MainActivity.this)
                     .setView(_view)
@@ -299,31 +305,33 @@ public class MainActivity extends AppCompatActivity
                     .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            StringBuilder _radom =new StringBuilder();
-                            for (NumberPicker picker:numberPickers
+                            StringBuilder _radom = new StringBuilder();
+                            for (NumberPicker picker : numberPickers
                                     ) {
                                 _radom.append(picker.getValue());
                             }
                             int signtype;
-                            if(radioGroup.getCheckedRadioButtonId()==R.id.radioButton_ontime){
+                            if (radioGroup.getCheckedRadioButtonId() == R.id.radioButton_ontime) {
                                 signtype = 1;
-                            }else signtype = 2;
-                            new Thread(new SigninRunnable(_radom.toString(),signtype,_position)).start();
+                            } else signtype = 2;
+                            new Thread(new SigninRunnable(_radom.toString(), signtype, _position)).start();
 
                         }
                     }).show();
             return true;
         }
     }
-    void showMsg(String msg){
-        Toast.makeText(this,msg,Toast.LENGTH_SHORT).show();
+
+    void showMsg(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
-    String signCourse(String radom,int signtype,int position) {
+
+    public String signCourse(String radom, int signtype, int position) {
         String _url = HOST + "studentSign/";
         try {
             Map _item = (Map) mCourseList.get(position);
             JSONObject _js = new JSONObject();
-            _js.put("sign_type", ""+signtype);
+            _js.put("sign_type", "" + signtype);
             _js.put("random_number", radom);
             _js.put("classing_id", _item.get("classing_id"));
             _js.put("account", mAccount);
@@ -332,32 +340,38 @@ public class MainActivity extends AppCompatActivity
             if (_item.containsKey("afclass_id")) {
                 _js.put("afclass_id", _item.get("afclass_id"));
             }
-            return  HttpURLProtocol.postjson(_url, _js.toString().getBytes());
+            return HttpURLProtocol.postjson(_url, _js.toString().getBytes());
 
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
-        return null;
+
     }
-    class SigninRunnable implements Runnable{
+
+    class SigninRunnable implements Runnable {
         String mRadom;
         int mSigntype;
         int mPosition;
-        public SigninRunnable(String radom,int signtype,int position) {
-            mRadom=radom;
-            mSigntype=signtype;
-            mPosition=position;
+
+        public SigninRunnable(String radom, int signtype, int position) {
+            mRadom = radom;
+            mSigntype = signtype;
+            mPosition = position;
         }
 
         @Override
         public void run() {
             synchronized (this) {
                 String result = signCourse(mRadom, mSigntype, mPosition);
+                if (result.equals("error")) {
+                    mMyHandler.sendEmptyMessage(0);
+                }
                 try {
                     JSONArray _ja = new JSONArray(result);
                     Message _ms = new Message();
                     Bundle bundle = new Bundle();
-                    bundle.putString("signtype",""+mSigntype);
+                    bundle.putString("signtype", "" + mSigntype);
                     bundle.putInt("position", mPosition);
                     _ms.setData(bundle);
                     _ms.what = 3;
@@ -365,6 +379,7 @@ public class MainActivity extends AppCompatActivity
                     mMyHandler.sendMessage(_ms);
                 } catch (Exception e) {
                     e.printStackTrace();
+                    mMyHandler.sendEmptyMessage(0);
                 }
             }
         }

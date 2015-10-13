@@ -7,22 +7,30 @@
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:gravity="center"
         android:layout_height="wrap_content">
         <NumberPicker
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:solidColor="@android:color/holo_purple"
             android:layout_height="wrap_content"
             android:id="@+id/numberPicker1"/>
         <NumberPicker
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:focusable="false"
+            android:solidColor="@android:color/holo_purple"
             android:layout_height="wrap_content"
             android:id="@+id/numberPicker2"/>
         <NumberPicker
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:solidColor="@android:color/holo_purple"
             android:layout_height="wrap_content"
-            android:id="@+id/numberPicker3"/>
+            android:id="@+id/numberPicker3" />
         <NumberPicker
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:solidColor="@android:color/holo_purple"
             android:layout_height="wrap_content"
             android:id="@+id/numberPicker4"/>
             </LinearLayout>

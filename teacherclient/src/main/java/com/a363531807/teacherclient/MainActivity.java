@@ -14,6 +14,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Gravity;
 import android.view.Menu;
@@ -37,7 +38,7 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener{
     public static final String HOST="http://registersystem.sinaapp.com/registersystem/";
-    //public static final String HOST="http://10.10.164.194:8000/registersystem/";
+   // public static final String HOST="http://10.10.164.194:8000/registersystem/";
     public static final String TAG ="stqbill";
     public static final String USER_TYPE  = "1"; //1代表教师；
     private String mAccount;
@@ -55,12 +56,7 @@ public class MainActivity extends AppCompatActivity
         mAccount=getIntent().getStringExtra("account");
         mMyHandler = new MyHandler();
         initView();
-        mMyHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                getResoursefromInternet();
-            }
-        },1000);
+        getResoursefromInternet();
 
     }
     private void initView(){
@@ -117,7 +113,9 @@ public class MainActivity extends AppCompatActivity
             String _result= HttpURLProtocol.postjson(_url, _js.toString().getBytes());
             if (_result.equals("error")){
                 mMyHandler.sendEmptyMessage(0);
+                return;
             }
+            Log.i(TAG,"RESUT  "+_result);
             JSONArray jsarray = new JSONArray(_result);
             if(jsarray.optInt(0)==1){
                 List<Map> grouplist = new ArrayList<>();
@@ -158,11 +156,13 @@ public class MainActivity extends AppCompatActivity
                 mGroupList=grouplist;
                 mMyHandler.sendEmptyMessage(1);
                 return ;
+            }else {
+                mMyHandler.sendEmptyMessage(0);
             }
         }  catch (Exception e) {
             e.printStackTrace();
+            mMyHandler.sendEmptyMessage(0);
         }
-        mMyHandler.sendEmptyMessage(0);
     }
 
     @Override
@@ -180,7 +180,7 @@ public class MainActivity extends AppCompatActivity
        ExpandableListView.ExpandableListContextMenuInfo _info = (ExpandableListView.ExpandableListContextMenuInfo)
                 menuInfo;
         Map<String,String> map = mGroupList.get((int)_info.id);
-        menu.setHeaderTitle("课程管理");
+        //menu.setHeaderTitle("课程管理");
         Intent onintent = new Intent();
         if (map.containsKey("on_random")){
             onintent.putExtra("reset",true);
@@ -323,7 +323,7 @@ public class MainActivity extends AppCompatActivity
         if (show){
             switch (type){
                 case 0:
-                    mProgressDialog = ProgressDialog.show(this,"提示","正在拼命从服务器加载数据中……");
+                    mProgressDialog = ProgressDialog.show(this,null,"正在拼命从服务器加载数据中……");
                     break;
                 case 1:
                     break;
@@ -382,8 +382,6 @@ public class MainActivity extends AppCompatActivity
                             new String[]{"student_name","student_number"},
                             new int[]{android.R.id.text1,android.R.id.text2});
                     new AlertDialog.Builder(MainActivity.this)
-                            .setTitle(R.string.unsign_student_title)
-                            //.setView(lv)
                             .setAdapter(adapter, null)
                             .show();
             }
@@ -396,6 +394,11 @@ public class MainActivity extends AppCompatActivity
             jsonObject.put("classing_id", "" + mGroupList.get(position).get("classing_id"));
             jsonObject.put("set_type", "" + type);
             String result = HttpURLProtocol.postjson(url,jsonObject.toString().getBytes());
+            Log.i(TAG,"setrandom   "+result);
+            if (result.equals("error")){
+                mMyHandler.sendEmptyMessage(0);
+                return;
+            }
             jsonObject = new JSONObject(result);
             if (jsonObject.optBoolean("result")){
                 Message msg = new Message();
@@ -410,7 +413,6 @@ public class MainActivity extends AppCompatActivity
             e.printStackTrace();
             mMyHandler.sendEmptyMessage(0);
         }
-        mMyHandler.sendEmptyMessage(0);
     }
     public void getUnsignStudent(int position){
         String url = HOST+"getunsignlist/";
@@ -418,6 +420,11 @@ public class MainActivity extends AppCompatActivity
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("classing_id",mGroupList.get(position).get("classing_id"));
             String result = HttpURLProtocol.postjson(url,jsonObject.toString().getBytes());
+            Log.i(TAG,"getunsign"+result);
+            if (result.equals("error")){
+                mMyHandler.sendEmptyMessage(0);
+                return;
+            }
             jsonObject = new JSONObject(result);
             if (jsonObject.optBoolean("result")){
                 JSONArray jsonArray = jsonObject.optJSONArray("body");
@@ -439,6 +446,8 @@ public class MainActivity extends AppCompatActivity
                 bundle.putSerializable("unsign_list", (Serializable) list);
                 msg.setData(bundle);
                 mMyHandler.sendMessage(msg);
+            }else if(result.equals("error")){
+                mMyHandler.sendEmptyMessage(0);
             }
         }catch (Exception e){
             e.printStackTrace();

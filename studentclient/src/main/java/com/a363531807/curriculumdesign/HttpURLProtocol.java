@@ -46,8 +46,9 @@ public class HttpURLProtocol {
             InputStream instream = conn.getInputStream();
             ByteArrayOutputStream byteoutstream = new ByteArrayOutputStream();
             byte[] buffer = new byte[1024];
-            while (instream.read(buffer) != -1) {
-                byteoutstream.write(buffer);
+            int len = -1;
+            while ((len=instream.read(buffer)) != -1) {
+                byteoutstream.write(buffer,0,len);
             }
             instream.close();
             outstream.close();
@@ -83,11 +84,13 @@ public class HttpURLProtocol {
             InputStream instream = conn.getInputStream();
             ByteArrayOutputStream byteoutstream = new ByteArrayOutputStream();
             byte[] buffer = new byte[1024];
-            while (instream.read(buffer) != -1) {
-                byteoutstream.write(buffer);
+            int len = -1;
+            while ((len=instream.read(buffer)) != -1) {
+                byteoutstream.write(buffer,0,len);
             }
             outstream.close();
             instream.close();
+            conn.disconnect();
             return byteoutstream.toString().trim();
         }
         outstream.close();
