@@ -39,7 +39,7 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener{
     public static final String HOST="http://registersystem.sinaapp.com/registersystem/";
-    //public static final String HOST="http://10.10.164.200:8000/registersystem/";
+    //public static final String HOST="http://10.10.164.194:8000/registersystem/";
     public static final String TAG ="stqbill";
     public static final String USER_TYPE  = "0"; //0代表学生；
     public static final int LOGIN_RESULT_CODE =11;

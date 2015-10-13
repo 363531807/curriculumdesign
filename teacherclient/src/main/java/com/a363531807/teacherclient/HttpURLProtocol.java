@@ -26,7 +26,7 @@ public class HttpURLProtocol {
         byte[] entiy = data.toString().getBytes(); // 生成实体数据
         URL url = new URL(path);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setConnectTimeout(5000);
+        conn.setConnectTimeout(3000);
         conn.setRequestMethod("POST");
         conn.setDoOutput(true);
         // 设置是否向httpUrlConnection输出，因为这个是post请求，参数要放在
@@ -64,7 +64,7 @@ public class HttpURLProtocol {
 
         URL url = new URL(path);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setConnectTimeout(5000);
+        conn.setConnectTimeout(3000);
         conn.setRequestMethod("POST");
         conn.setDoOutput(true);
         conn.setDoInput(true);

@@ -14,18 +14,19 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ExpandableListView;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -34,8 +35,8 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener{
-    //public static final String HOST="http://registersystem.sinaapp.com/registersystem/";
-    public static final String HOST="http://10.10.164.194:8000/registersystem/";
+    public static final String HOST="http://registersystem.sinaapp.com/registersystem/";
+    //public static final String HOST="http://10.10.164.194:8000/registersystem/";
     public static final String TAG ="stqbill";
     public static final String USER_TYPE  = "1"; //1代表教师；
     private String mAccount;
@@ -209,11 +210,12 @@ public class MainActivity extends AppCompatActivity
         final ExpandableListView.ExpandableListContextMenuInfo info=
                 (ExpandableListView.ExpandableListContextMenuInfo)item.getMenuInfo();
         Intent intent;
-        Log.i(TAG,"ID"+item.getItemId());
+        final int position= (int) info.id;
         switch (item.getItemId()){
             case 1:
             case 2:
                 intent=item.getIntent();
+                final int signtype =item.getItemId();
                 if (intent.getBooleanExtra("reset",false)){
                     new AlertDialog.Builder(this)
                             .setTitle(R.string.reset_random_title)
@@ -221,8 +223,6 @@ public class MainActivity extends AppCompatActivity
                             .setPositiveButton(R.string.dialog_yes, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    final int position= (int) info.id;
-                                    final int signtype =item.getItemId();
                                     showProgressDialog(true,0);
                                     new Thread(new Runnable() {
                                         @Override
@@ -236,11 +236,26 @@ public class MainActivity extends AppCompatActivity
                             .setNegativeButton(R.string.dialog_cancel,null)
                             .show();
 
+                }else {
+                    showProgressDialog(true,0);
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            setRamdom(signtype,position);
+                        }
+                    }).start();
                 }
                 break;
             case 3:
                 break;
             case 4:
+                showProgressDialog(true,1);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        getUnsignStudent(position);
+                    }
+                }).start();
                 break;
             case 5:
                 break;
@@ -317,9 +332,7 @@ public class MainActivity extends AppCompatActivity
             if (mProgressDialog!=null&&mProgressDialog.isShowing()){
                 mProgressDialog.cancel();
             }
-
-            }
-
+        }
     }
     class MyHandler extends Handler{
         @Override
@@ -346,22 +359,31 @@ public class MainActivity extends AppCompatActivity
                     }
                     break;
                 case 2:
-                    showProgressDialog(false,0);
+                    showProgressDialog(false, 0);
                     getResoursefromInternet();
-
-
+                    break;
+                case 3:
+                    showProgressDialog(false,0);
+                    List<Map<String,String>> list= (List<Map<String,String>>)msg.getData().getSerializable("unsign_list");
+                    SimpleAdapter adapter = new SimpleAdapter(MainActivity.this,list,
+                            android.R.layout.simple_list_item_2,
+                            new String[]{"student_name","student_number"},
+                            new int[]{android.R.id.text1,android.R.id.text2});
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setTitle(R.string.unsign_student_title)
+                            //.setView(lv)
+                            .setAdapter(adapter,null)
+                            .show();
             }
         }
     }
     public void setRamdom(int type,int position){
         String url = HOST+"setrandom/";
         try{
-            Map map = mGroupList.get(position);
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("classing_id", "" + map.get("classing_id"));
-            jsonObject.put("set_type", "" +type);
+            jsonObject.put("classing_id", "" + mGroupList.get(position).get("classing_id"));
+            jsonObject.put("set_type", "" + type);
             String result = HttpURLProtocol.postjson(url,jsonObject.toString().getBytes());
-            Log.i(TAG,result);
             jsonObject = new JSONObject(result);
             if (jsonObject.optBoolean("result")){
                 mMyHandler.sendEmptyMessage(2);
@@ -372,6 +394,40 @@ public class MainActivity extends AppCompatActivity
             mMyHandler.sendEmptyMessage(0);
         }
         mMyHandler.sendEmptyMessage(0);
+    }
+    public void getUnsignStudent(int position){
+        String url = HOST+"getunsignlist/";
+        try{
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("classing_id",mGroupList.get(position).get("classing_id"));
+            String result = HttpURLProtocol.postjson(url,jsonObject.toString().getBytes());
+            jsonObject = new JSONObject(result);
+            if (jsonObject.optBoolean("result")){
+                JSONArray jsonArray = jsonObject.optJSONArray("body");
+                int length = jsonArray.length();
+                List<Map> list = new ArrayList<>();
+                for (int i=0;i<length;i++){
+                    JSONObject js =jsonArray.optJSONObject(i);
+                    Map<String,String> map = new HashMap<>();
+                    Iterator<String> it = js.keys();
+                    while (it.hasNext()){
+                        String key = it.next();
+                        map.put(key,js.optString(key));
+                    }
+                    list.add(map);
+                }
+                Message msg = new Message();
+                msg.what=3;
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("unsign_list", (Serializable) list);
+                msg.setData(bundle);
+                mMyHandler.sendMessage(msg);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            mMyHandler.sendEmptyMessage(0);
+        }
+
     }
 
     void showMsg(String msg){

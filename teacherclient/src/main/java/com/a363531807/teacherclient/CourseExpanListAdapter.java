@@ -88,7 +88,7 @@ public class CourseExpanListAdapter extends BaseExpandableListAdapter{
         mHolder.course_name.setText(_map.get("course_name"));
         mHolder.course_time.setText(_map.get("course_time"));
         mHolder.position.setText(_map.get("position"));
-        mHolder.classes.setText(_map.get("classes"));
+        mHolder.classes.setText(_map.get("classes_name"));
         if(_map.containsKey("on_random")){
             mHolder.on_random.setText(_map.get("on_random"));
         }
