@@ -105,65 +105,6 @@ public class MainActivity extends AppCompatActivity
         }).start();
     }
 
-    public void getCourseList(){
-        String _url = HOST+"getteachlist/";
-        try {
-            JSONObject _js = new JSONObject();
-            _js.put("account", mAccount);
-            String _result= HttpURLProtocol.postjson(_url, _js.toString().getBytes());
-            if (_result.equals("error")){
-                mMyHandler.sendEmptyMessage(0);
-                return;
-            }
-            Log.i(TAG,"RESUT  "+_result);
-            JSONArray jsarray = new JSONArray(_result);
-            if(jsarray.optInt(0)==1){
-                List<Map> grouplist = new ArrayList<>();
-                List<List<Map>> _childmainlist = new ArrayList<>();
-                int length = jsarray.length();
-                for (int i=1;i<length;i++){
-                    Map<String,String> _map = new HashMap<>();
-                    _js =   jsarray.optJSONObject(i);
-                    Iterator _it = _js.keys();
-                    String _key;
-                    while (_it.hasNext()){
-                        _key = (String)_it.next();
-                        _map.put(_key,_js.optString(_key));
-                    }
-                    if (!_map.isEmpty()){
-                        JSONArray _childarray = new JSONArray(_map.get("sign_student"));
-                        _map.remove("sign_student");
-                        List<Map> childlist = new ArrayList<>();
-                        int clength =_childarray.length();
-                        for (int j=0;j<clength;j++){
-                            JSONObject chilobj = _childarray.optJSONObject(j);
-                            Iterator chilit = chilobj.keys();
-                            Map<String,String> chmap=new HashMap<>();
-                            String chilkey;
-                            while (chilit.hasNext()){
-                                chilkey=(String)chilit.next();
-                                chmap.put(chilkey,chilobj.optString(chilkey));
-                            }
-                            if (!chmap.isEmpty()){
-                                childlist.add(chmap);
-                            }
-                        }
-                        grouplist.add(_map);
-                        _childmainlist.add(childlist);
-                    }
-                }
-                mChildList=_childmainlist;
-                mGroupList=grouplist;
-                mMyHandler.sendEmptyMessage(1);
-                return ;
-            }else {
-                mMyHandler.sendEmptyMessage(0);
-            }
-        }  catch (Exception e) {
-            e.printStackTrace();
-            mMyHandler.sendEmptyMessage(0);
-        }
-    }
 
     @Override
     public void onBackPressed() {
@@ -245,7 +186,7 @@ public class MainActivity extends AppCompatActivity
                         }
                     }).start();
                 }
-                break;
+                return true;
             case 3:
                 break;
             case 4:
@@ -256,7 +197,7 @@ public class MainActivity extends AppCompatActivity
                         getUnsignStudent(position);
                     }
                 }).start();
-                break;
+                return true;
             case 5:
                 break;
             case 6:
@@ -387,12 +328,73 @@ public class MainActivity extends AppCompatActivity
             }
         }
     }
+
+    public void getCourseList(){
+        String _url = HOST+"getteachlist/";
+        try {
+            JSONObject _js = new JSONObject();
+            _js.put("account", mAccount);
+            String _result= HttpURLProtocol.postjson(_url, _js.toString().getBytes());
+            if (_result.equals("error")){
+                mMyHandler.sendEmptyMessage(0);
+                return;
+            }
+            Log.i(TAG,"RESUT  "+_result);
+            JSONArray jsarray = new JSONArray(_result);
+            if(jsarray.optInt(0)==1){
+                List<Map> grouplist = new ArrayList<>();
+                List<List<Map>> _childmainlist = new ArrayList<>();
+                int length = jsarray.length();
+                for (int i=1;i<length;i++){
+                    Map<String,String> _map = new HashMap<>();
+                    _js =   jsarray.optJSONObject(i);
+                    Iterator _it = _js.keys();
+                    String _key;
+                    while (_it.hasNext()){
+                        _key = (String)_it.next();
+                        _map.put(_key,_js.optString(_key));
+                    }
+                    if (!_map.isEmpty()){
+                        JSONArray _childarray = new JSONArray(_map.get("sign_student"));
+                        _map.remove("sign_student");
+                        List<Map> childlist = new ArrayList<>();
+                        int clength =_childarray.length();
+                        for (int j=0;j<clength;j++){
+                            JSONObject chilobj = _childarray.optJSONObject(j);
+                            Iterator chilit = chilobj.keys();
+                            Map<String,String> chmap=new HashMap<>();
+                            String chilkey;
+                            while (chilit.hasNext()){
+                                chilkey=(String)chilit.next();
+                                chmap.put(chilkey,chilobj.optString(chilkey));
+                            }
+                            if (!chmap.isEmpty()){
+                                childlist.add(chmap);
+                            }
+                        }
+                        grouplist.add(_map);
+                        _childmainlist.add(childlist);
+                    }
+                }
+                mChildList=_childmainlist;
+                mGroupList=grouplist;
+                mMyHandler.sendEmptyMessage(1);
+                return ;
+            }else {
+                mMyHandler.sendEmptyMessage(0);
+            }
+        }  catch (Exception e) {
+            e.printStackTrace();
+            mMyHandler.sendEmptyMessage(0);
+        }
+    }
+
     public void setRamdom(int type,int position){
         String url = HOST+"setrandom/";
         try{
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("classing_id", "" + mGroupList.get(position).get("classing_id"));
-            jsonObject.put("set_type", "" + type);
+            jsonObject.put("set_type", type);
             String result = HttpURLProtocol.postjson(url,jsonObject.toString().getBytes());
             Log.i(TAG,"setrandom   "+result);
             if (result.equals("error")){

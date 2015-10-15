@@ -1,6 +1,7 @@
 package com.a363531807.curriculumdesign;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -16,14 +17,17 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.NumberPicker;
 import android.widget.RadioGroup;
+import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -38,8 +42,8 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
-    public static final String HOST = "http://registersystem.sinaapp.com/registersystem/";
-    //public static final String HOST="http://10.10.164.194:8000/registersystem/";
+   // public static final String HOST = "http://registersystem.sinaapp.com/registersystem/";
+    public static final String HOST="http://10.10.164.206:8000/registersystem/";
     public static final String TAG = "stqbill";
     public static final String USER_TYPE = "0"; //0代表学生；
     public static final int LOGIN_RESULT_CODE = 11;
@@ -49,6 +53,7 @@ public class MainActivity extends AppCompatActivity
     private CourseListAdapter mListAdapter;
     private List<Map> mCourseList;
     private ListView mCourselv;
+    private ProgressDialog mProgressDialog;
     private MyHandler mMyHandler;
     private SwipeRefreshLayout mSwipeRefreshLayout;
 
@@ -104,61 +109,9 @@ public class MainActivity extends AppCompatActivity
         });
 
         mCourselv = (ListView) findViewById(R.id.lv_course_view);
-        mCourselv.setOnItemLongClickListener(new SignLvOnItemLongClickListener());
-
+        registerForContextMenu(mCourselv);
     }
 
-    public void getResoursefromInternet() {
-        if (!mSwipeRefreshLayout.isRefreshing()) {
-            mSwipeRefreshLayout.setRefreshing(true);
-        }
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                synchronized (this) {
-                    getCourseList();
-                }
-            }
-        }).start();
-    }
-
-    public void getCourseList() {
-        String _url = HOST + "getcourselist/";
-        try {
-            List _resultlist = new ArrayList();
-            JSONObject _js = new JSONObject();
-            _js.put("account", mAccount);
-            String _result = HttpURLProtocol.postjson(_url, _js.toString().getBytes());
-            if (_result.equals("error")) {
-                mMyHandler.sendEmptyMessage(0);
-            }
-            JSONArray _jsarray = new JSONArray(_result);
-            if (_jsarray.optString(0).equals("ok")) {
-                int length = _jsarray.length();
-                for (int i = 1; i < length; i++) {
-                    Map _map = new HashMap();
-                    _js = _jsarray.optJSONObject(i);
-                    Iterator _it = _js.keys();
-                    String _key;
-                    while (_it.hasNext()) {
-                        _key = (String) _it.next();
-                        _map.put(_key, _js.optString(_key));
-                    }
-                    if (!_map.isEmpty()) {
-                        _resultlist.add(_map);
-                    }
-                }
-                mCourseList = _resultlist;
-                mMyHandler.sendEmptyMessage(1);
-                return;
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            mMyHandler.sendEmptyMessage(0);
-        }
-
-    }
 
     @Override
     public void onBackPressed() {
@@ -168,6 +121,167 @@ public class MainActivity extends AppCompatActivity
         } else {
             super.onBackPressed();
         }
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)menuInfo;
+        Map map = mCourseList.get((int) info.id);
+        if (map.containsKey("isSign")){
+            if (map.get("isSign").equals("0")){
+                menu.add(Menu.NONE,1,Menu.NONE,R.string.menu_signcourse);
+                menu.add(Menu.NONE,2,Menu.NONE,R.string.ask_for_leave);
+            }else if(map.get("isSign").equals("3")){
+                menu.add(Menu.NONE,4,Menu.NONE,R.string.check_reason_ask_for_leave);
+            }else if (map.get("isSign").equals("4")) {
+                menu.add(Menu.NONE,1,Menu.NONE,R.string.menu_signcourse);
+                menu.add(Menu.NONE,3,Menu.NONE,R.string.rewrite_ask_for_leave);
+                menu.add(Menu.NONE,4,Menu.NONE,R.string.check_reason_ask_for_leave);
+            }else if (map.get("isSign").equals("5")){
+                menu.add(Menu.NONE,1,Menu.NONE,R.string.menu_signcourse);
+                menu.add(Menu.NONE,5,Menu.NONE,R.string.reject_ask_for_leave);
+                menu.add(Menu.NONE,2,Menu.NONE,R.string.reask_for_leave);
+            }else {
+                if (map.containsKey("myrate")){
+                    menu.add(Menu.NONE,7,Menu.NONE,R.string.rate_result_for_this_class);
+                }else {
+                    menu.add(Menu.NONE, 6, Menu.NONE, R.string.rate_for_this_class);
+                }
+            }
+        }else {
+            menu.add(Menu.NONE,1,Menu.NONE,R.string.menu_signcourse);
+            menu.add(Menu.NONE,2,Menu.NONE,R.string.ask_for_leave);
+        }
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        final int position = (int)((AdapterView.AdapterContextMenuInfo)item.getMenuInfo()).id;
+        Map map;
+        View view;
+        final RatingBar ratingBar;
+        switch (item.getItemId()){
+            case 1:
+                View _view = LayoutInflater.from(MainActivity.this).inflate(R.layout.sign_dialog_layout, null);
+                final NumberPicker[] numberPickers = new NumberPicker[4];
+                numberPickers[0] = (NumberPicker) _view.findViewById(R.id.numberPicker1);
+                numberPickers[1] = (NumberPicker) _view.findViewById(R.id.numberPicker2);
+                numberPickers[2] = (NumberPicker) _view.findViewById(R.id.numberPicker3);
+                numberPickers[3] = (NumberPicker) _view.findViewById(R.id.numberPicker4);
+                for (NumberPicker picker : numberPickers) {
+                    picker.setMaxValue(9);
+                    picker.setMinValue(0);
+                    picker.setValue(0);
+                }
+                final RadioGroup radioGroup = (RadioGroup) _view.findViewById(R.id.radiogroup_sign);
+                new AlertDialog.Builder(MainActivity.this)
+                        .setView(_view)
+                        .setTitle("请选择签到随机码")
+                        .setNegativeButton("取消", null)
+                        .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                showProgressDialog(true, 0);
+                                StringBuilder _radom = new StringBuilder();
+                                for (NumberPicker picker : numberPickers) {
+                                    _radom.append(picker.getValue());
+                                }
+                                int signtype;
+                                if (radioGroup.getCheckedRadioButtonId() == R.id.radioButton_ontime) {
+                                    signtype = 1;
+                                } else signtype = 2;
+                                new Thread(new SigninRunnable(_radom.toString(), signtype, position)).start();
+
+                            }
+                        }).show();
+                return true;
+            case 2:
+            case 3:
+                final EditText editText = new EditText(this);
+                editText.setTextColor(getResources().getColor(android.R.color.primary_text_light_nodisable));
+                new AlertDialog.Builder(this).setTitle(R.string.dia_ask_leave_title)
+                        .setMessage(R.string.dia_ask_leave_msg)
+                        .setView(editText)
+                        .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                showProgressDialog(true,0);
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        leaveApply(position,editText.getText().toString().trim());
+                                    }
+                                }).start();
+                            }
+                        }).setNegativeButton(R.string.cancel,null)
+                        .show();
+                return true;
+            case 4://插看请假理由
+                map = mCourseList.get(position);
+                if (map.containsKey("afl_reason")) {
+                    String reason = (String) map.get("afl_reason");
+                    new AlertDialog.Builder(this).setTitle(R.string.reason_for_leave)
+                            .setMessage(reason)
+                            .setNeutralButton(R.string.cancel,null)
+                            .show();
+                }else {
+                    showMsg("数据有点旧了，请刷新数据");
+                }
+                return true;
+            case 5://插看拒绝理由
+                map = mCourseList.get(position);
+                if (map.containsKey("afl_reject")) {
+                    String reason = (String) map.get("afl_reject");
+                    new AlertDialog.Builder(this).setTitle(R.string.reject_for_leave)
+                            .setMessage(reason)
+                            .setNeutralButton(R.string.cancel, null)
+                            .show();
+                }else {
+                    showMsg("数据有点旧了，请刷新数据");
+                }
+                return true;
+            case 6://评分
+                view = LayoutInflater.from(this).inflate(R.layout.rate_layout,null);
+                ratingBar = (RatingBar)view.findViewById(R.id.rate_course);
+                new AlertDialog.Builder(this)
+                        .setView(view)
+                        .setMessage(R.string.rate_hint)
+                        .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                    final int result =(int)ratingBar.getRating();
+                                Log.i(TAG,"RATING"+result);
+                                    new Thread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            rateforcourse(position,result);
+                                        }
+                                    }).start();
+
+                            }
+                        })
+                        .setNegativeButton(R.string.cancel, null)
+                        .show();
+                return true;
+            case 7://查看评分
+                map = mCourseList.get(position);
+                if (map.containsKey("myrate")) {
+                    view = LayoutInflater.from(this).inflate(R.layout.rate_layout,null);
+                    ratingBar = (RatingBar)view.findViewById(R.id.rate_course);
+                    ratingBar.setRating(Float.parseFloat((String) map.get("myrate")));
+                    ratingBar.setIsIndicator(true);
+                    new AlertDialog.Builder(this).setTitle(R.string.rate_result_for_this_class)
+                            .setView(view)
+                            .setNeutralButton(R.string.cancel, null)
+                            .show();
+                }else {
+                    showMsg("数据有点旧了，请刷新数据");
+                }
+                return true;
+
+        }
+       return super.onContextItemSelected(item);
     }
 
     @Override
@@ -232,6 +346,7 @@ public class MainActivity extends AppCompatActivity
                     if (mSwipeRefreshLayout.isRefreshing()) {
                         mSwipeRefreshLayout.setRefreshing(false);
                     }
+                    showProgressDialog(false,0);
                     showMsg("更新失败");
                     break;
                 case 1:
@@ -246,6 +361,7 @@ public class MainActivity extends AppCompatActivity
                     }
                     break;
                 case 3:
+                    showProgressDialog(false,0);
                     switch (msg.arg1) {
                         case 0:
                             showMsg("只能在校园网中进行签到哦！");
@@ -266,60 +382,84 @@ public class MainActivity extends AppCompatActivity
                             showMsg("该SIM卡已被其他用户使用！");
                             break;
                         case 6:
+                            getResoursefromInternet();
                             showMsg("恭喜您签到成功！");
-                            Bundle bundle = msg.getData();
-                            mCourseList.get(bundle.getInt("position")).
-                                    put("isSign", bundle.getString("signtype"));
-                            mListAdapter.updateList(mCourseList);
+
                             break;
                     }
+                    break;
+                case 4://申请请假失败
+                    showProgressDialog(false,0);
+                    showMsg("申请请假失败，请等会重试");
+                    break;
+                case 5:
+                    showProgressDialog(false,0);
+                    getResoursefromInternet();
+                    showMsg("申请请假成功，请耐心等待老师处理");
+                    break;
+                case 6:
+                    showProgressDialog(false,0);
+                    showMsg("评分失败，请待会再试");
+                    break;
+                case 7:
+                    showProgressDialog(false,0);
+                    getResoursefromInternet();
+                    showMsg("评分成功");
+                    break;
+
             }
         }
     }
-
-    class SignLvOnItemLongClickListener implements AdapterView.OnItemLongClickListener {
-        @Override
-        public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-            Map _item = (Map) mCourseList.get(position);
-            if (_item.containsKey("isSign") && !_item.get("isSign").equals("0")) {
-                Toast.makeText(MainActivity.this, "您已签到!", Toast.LENGTH_SHORT).show();
-                return false;
-            }
-            View _view = LayoutInflater.from(MainActivity.this).inflate(R.layout.sign_dialog_layout, null);
-            final NumberPicker[] numberPickers = new NumberPicker[4];
-            numberPickers[0] = (NumberPicker) _view.findViewById(R.id.numberPicker1);
-            numberPickers[1] = (NumberPicker) _view.findViewById(R.id.numberPicker2);
-            numberPickers[2] = (NumberPicker) _view.findViewById(R.id.numberPicker3);
-            numberPickers[3] = (NumberPicker) _view.findViewById(R.id.numberPicker4);
-            for (NumberPicker picker : numberPickers) {
-                picker.setMaxValue(9);
-                picker.setMinValue(0);
-                picker.setValue(0);
-            }
-            final RadioGroup radioGroup = (RadioGroup) _view.findViewById(R.id.radiogroup_sign);
-            final int _position = position;
-            new AlertDialog.Builder(MainActivity.this)
-                    .setView(_view)
-                    .setTitle("请选择签到随机码")
-                    .setNegativeButton("取消", null)
-                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            StringBuilder _radom = new StringBuilder();
-                            for (NumberPicker picker : numberPickers
-                                    ) {
-                                _radom.append(picker.getValue());
-                            }
-                            int signtype;
-                            if (radioGroup.getCheckedRadioButtonId() == R.id.radioButton_ontime) {
-                                signtype = 1;
-                            } else signtype = 2;
-                            new Thread(new SigninRunnable(_radom.toString(), signtype, _position)).start();
-
-                        }
-                    }).show();
-            return true;
+    public void getResoursefromInternet() {
+        if (!mSwipeRefreshLayout.isRefreshing()) {
+            mSwipeRefreshLayout.setRefreshing(true);
         }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (this) {
+                    getCourseList();
+                }
+            }
+        }).start();
+    }
+
+    public void getCourseList() {
+        String _url = HOST + "getcourselist/";
+        try {
+            List _resultlist = new ArrayList();
+            JSONObject _js = new JSONObject();
+            _js.put("account", mAccount);
+            String _result = HttpURLProtocol.postjson(_url, _js.toString().getBytes());
+            if (_result.equals("error")) {
+                mMyHandler.sendEmptyMessage(0);
+            }
+            JSONArray _jsarray = new JSONArray(_result);
+            if (_jsarray.optString(0).equals("ok")) {
+                int length = _jsarray.length();
+                for (int i = 1; i < length; i++) {
+                    Map _map = new HashMap();
+                    _js = _jsarray.optJSONObject(i);
+                    Iterator _it = _js.keys();
+                    String _key;
+                    while (_it.hasNext()) {
+                        _key = (String) _it.next();
+                        _map.put(_key, _js.optString(_key));
+                    }
+                    if (!_map.isEmpty()) {
+                        _resultlist.add(_map);
+                    }
+                }
+                mCourseList = _resultlist;
+                mMyHandler.sendEmptyMessage(1);
+                return;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            mMyHandler.sendEmptyMessage(0);
+        }
+
     }
 
     void showMsg(String msg) {
@@ -348,6 +488,65 @@ public class MainActivity extends AppCompatActivity
         }
 
     }
+    public void leaveApply(int position,String reason){
+        String url = HOST+"leaveapply/";
+        try{
+            JSONObject jsonObject = new JSONObject();
+            Map<String,String> map = mCourseList.get(position);
+            if(map.containsKey("afclass_id")){
+                jsonObject.put("afclass_id",map.get("afclass_id"));
+            }else {
+                jsonObject.put("classing_id",map.get("classing_id"));
+                jsonObject.put("account",mAccount);
+            }
+            jsonObject.put("leave_reason",reason);
+            String result = HttpURLProtocol.postjson(url,jsonObject.toString().getBytes());
+            jsonObject = new JSONObject(result);
+            if (jsonObject.optBoolean("result")){
+                mMyHandler.sendEmptyMessage(5);
+            }else mMyHandler.sendEmptyMessage(4);
+        }catch (Exception e){
+            e.printStackTrace();
+            mMyHandler.sendEmptyMessage(4);
+        }
+    }
+    public void rateforcourse(int position,int rate){
+        String url = HOST+"rateforcourse/";
+        try{
+            JSONObject jsonObject = new JSONObject();
+            Map<String,String> map = mCourseList.get(position);
+            if(map.containsKey("afclass_id")) {
+                jsonObject.put("afclass_id", map.get("afclass_id"));
+                jsonObject.put("myrate", rate);
+                String result = HttpURLProtocol.postjson(url, jsonObject.toString().getBytes());
+                jsonObject = new JSONObject(result);
+                if (jsonObject.optBoolean("result")) {
+                    mMyHandler.sendEmptyMessage(7);
+                    return;
+                }
+            }
+            mMyHandler.sendEmptyMessage(6);
+        }catch (Exception e){
+            e.printStackTrace();
+            mMyHandler.sendEmptyMessage(6);
+        }
+    }
+
+    public void showProgressDialog(boolean show,int type){
+        if (show){
+            switch (type){
+                case 0:
+                    mProgressDialog = ProgressDialog.show(this, null, "正在拼命从服务器加载数据中……");
+                    break;
+                case 1:
+                    break;
+            }
+        }else{
+            if (mProgressDialog!=null&&mProgressDialog.isShowing()){
+                mProgressDialog.cancel();
+            }
+        }
+    }
 
     class SigninRunnable implements Runnable {
         String mRadom;
@@ -370,10 +569,6 @@ public class MainActivity extends AppCompatActivity
                 try {
                     JSONArray _ja = new JSONArray(result);
                     Message _ms = new Message();
-                    Bundle bundle = new Bundle();
-                    bundle.putString("signtype", "" + mSigntype);
-                    bundle.putInt("position", mPosition);
-                    _ms.setData(bundle);
                     _ms.what = 3;
                     _ms.arg1 = _ja.getInt(0);
                     mMyHandler.sendMessage(_ms);

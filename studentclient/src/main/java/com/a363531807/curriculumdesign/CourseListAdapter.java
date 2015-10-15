@@ -74,7 +74,10 @@ public class CourseListAdapter extends BaseAdapter{
                     _signtye = "请假";
                     break;
                 case 4:
-                    _signtye = "缺勤";
+                    _signtye = "请假申请中";
+                    break;
+                case 5:
+                    _signtye = "请假失败";
                     break;
             }
             mHolder.isSigh.setText(_signtye);
