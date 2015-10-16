@@ -26,6 +26,7 @@ public class AFLListActivity extends ListActivity implements LeaveApplyAdapter.L
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.leave_apply_content_layout);
         Bundle data = getIntent().getExtras();
         mList = (List<Map<String, String>>) data.getSerializable("leave_list");
