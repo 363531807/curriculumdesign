@@ -4,8 +4,6 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
-    <string name="action_settings">Settings</string>
-
     <!-- Strings related to login -->
     <string name="prompt_enumber">教工号</string>
     <string name="prompt_password">Password</string>

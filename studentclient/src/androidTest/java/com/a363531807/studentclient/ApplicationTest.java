@@ -1,4 +1,4 @@
-package com.a363531807.curriculumdesign;
+package com.a363531807.studentclient;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

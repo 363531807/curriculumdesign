@@ -1,4 +1,4 @@
-package com.a363531807.curriculumdesign;
+package com.a363531807.studentclient;
 
 import android.content.Context;
 import android.view.LayoutInflater;
