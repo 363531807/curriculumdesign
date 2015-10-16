@@ -8,6 +8,6 @@
                android:id="@+id/rate_course"
                android:numStars="5"
                android:max="5"
-               android:stepSize="1.0"
+               android:stepSize="1"
         />
 </LinearLayout>

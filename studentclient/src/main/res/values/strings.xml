@@ -36,4 +36,6 @@
     <string name="reject_for_leave">拒绝原因</string>
     <string name="rate_result_for_this_class">评分结果</string>
     <string name="rate_hint">请打5分哦！</string>
+    <string name="service_fail">服务器出错！</string>
+    <string name="error_unexist_account">用户名不存在！</string>
 </resources>

@@ -24,6 +24,8 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONObject;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -96,12 +98,12 @@ public class LoginActivity extends AppCompatActivity {
                 }
             }
         });
-            if (_sp.getBoolean("markaccount",false)){
-                mAccountView.setText(_sp.getString("account",""));
-                mPasswordView.setText(_sp.getString("password", ""));
-                mMarkAccount.setChecked(true);
-                mAutoLogin.setChecked(_sp.getBoolean("autologin",false));
-            }
+        if (_sp.getBoolean("markaccount",false)){
+            mAccountView.setText(_sp.getString("account",""));
+            mPasswordView.setText(_sp.getString("password", ""));
+            mMarkAccount.setChecked(true);
+            mAutoLogin.setChecked(_sp.getBoolean("autologin",false));
+        }
 
 
     }
@@ -247,7 +249,7 @@ public class LoginActivity extends AppCompatActivity {
 
         private final String mAccount;
         private final String mPassword;
-        private  String mresult ="2";
+        private  String mresult;
 
         UserLoginTask(String account, String password) {
             mAccount = account;
@@ -258,13 +260,13 @@ public class LoginActivity extends AppCompatActivity {
         protected Boolean doInBackground(Void... params) {
             // TODO: attempt authentication against a network service.
             try {
-               String url=MainActivity.HOST+"login/";
+               String url= TeacherClientActivity.HOST+"login/";
                 Map _map = new HashMap();
-                _map.put("login_type",MainActivity.USER_TYPE);
+                _map.put("login_type", TeacherClientActivity.USER_TYPE);
                 _map.put("number", mAccount);
                 _map.put("password", mPassword);
                 mresult = HttpURLProtocol.sendpostrequest(url,_map);
-                if ("result=0".equals(mresult)){
+                if (!"error".equals(mresult)){
                     return true;
                 }
             } catch (Exception e) {
@@ -279,15 +281,34 @@ public class LoginActivity extends AppCompatActivity {
             mAuthTask = null;
             showProgress(false);
             if (success) {
-                Toast.makeText(LoginActivity.this,R.string.login_succeed,Toast.LENGTH_SHORT).show();
-
-                Intent _intent = new Intent(LoginActivity.this,MainActivity.class);
-                _intent.putExtra("account",mAccount);
-                startActivity(_intent);
-                finish();
+                try{
+                    JSONObject object = new JSONObject(mresult);
+                    switch (object.optInt("result")){
+                        case 0:
+                            Intent _intent = new Intent(LoginActivity.this,TeacherClientActivity.class);
+                            _intent.putExtra("account",mAccount);
+                            _intent.putExtra("name",object.optString("name"));
+                            _intent.putExtra("sign",object.optString("sign"));
+                            Toast.makeText(LoginActivity.this,R.string.login_succeed,Toast.LENGTH_SHORT).show();
+                            startActivity(_intent);
+                            finish();
+                            break;
+                        case 1:
+                            mAccountView.setError(getString(R.string.error_unexist_account));
+                            mAccountView.requestFocus();
+                            break;
+                        case 2:
+                            Toast.makeText(LoginActivity.this,R.string.service_fail,Toast.LENGTH_SHORT).show();
+                            break;
+                        case 3:
+                            mPasswordView.setError(getString(R.string.error_incorrect_password));
+                            mPasswordView.requestFocus();
+                    }
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
             } else {
-                mPasswordView.setError(getString(R.string.error_incorrect_password));
-                mPasswordView.requestFocus();
+                Toast.makeText(LoginActivity.this,R.string.service_fail,Toast.LENGTH_SHORT).show();
             }
         }
 

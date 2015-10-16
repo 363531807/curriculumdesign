@@ -10,14 +10,14 @@
               android:layout_height="wrap_content"
               android:id="@+id/tv_course_name"
               android:layout_weight="1"
-              android:text="刘劲松附近送"
+              android:text="课程名"
               android:gravity="center"
         />
     <TextView android:layout_width="match_parent"
               android:layout_height="wrap_content"
               android:id="@+id/tv_course_time"
               android:layout_weight="1"
-              android:text="刘劲松附近送"
+              android:text="时间"
               android:gravity="center"
         />
 </LinearLayout>
@@ -28,14 +28,14 @@
               android:layout_height="wrap_content"
               android:id="@+id/tv_course_class"
               android:layout_weight="1"
-              android:text="刘劲松附近送"
+              android:text="班级"
               android:gravity="center"
         />
     <TextView android:layout_width="match_parent"
               android:layout_height="wrap_content"
               android:id="@+id/tv_course_position"
               android:layout_weight="1"
-              android:text="刘劲松附近送"
+              android:text="地点"
               android:gravity="center"
         />
 </LinearLayout>
@@ -149,6 +149,30 @@
         />
 </LinearLayout>
 
+<LinearLayout android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:orientation="horizontal">
+               <RatingBar android:layout_width="wrap_content"
+                          android:layout_height="wrap_content"
+                          android:id="@+id/rb_group_rate"
+                          android:numStars="5"
+                          android:max="5"
+                          android:stepSize="0.1"
+                          android:isIndicator="true"
+                   />
+                <TextView android:layout_width="wrap_content"
+                          android:layout_gravity="center"
+                          android:layout_height="match_parent"
+                          android:gravity="center"
+                          android:text="请假申请："
+                    />
+                <TextView android:layout_width="match_parent"
+                          android:layout_height="match_parent"
+                          android:gravity="center"
+                          android:text="3"
+                          android:id="@+id/tv_group_asfing"
+                    />
 
+</LinearLayout>
 
 </LinearLayout>

@@ -3,34 +3,16 @@
 
     <group android:checkableBehavior="single">
         <item
-            android:id="@+id/course_list"
-            android:icon="@android:drawable/ic_menu_day"
-            android:title="今日课表"/>
-        <item
-            android:id="@+id/my_site"
-            android:icon="@android:drawable/ic_menu_compass"
-            android:title="我的资料"/>
-        <item
             android:id="@+id/myRecord"
             android:icon="@android:drawable/ic_menu_save"
             android:title="我的记录"/>
         <item
             android:id="@+id/about"
             android:icon="@android:drawable/ic_menu_more"
-            android:title="关于"/>
+            android:title="更多功能待添加"/>
     </group>
 
-    <item android:title="我的社交">
-        <menu>
-            <item
-                android:id="@+id/communciated"
-                android:icon="@android:drawable/ic_menu_zoom"
-                android:title="讨论组"/>
-            <item
-                android:id="@+id/share_some"
-                android:icon="@android:drawable/ic_menu_share"
-                android:title="分享"/>
-        </menu>
-    </item>
+
+
 
 </menu>

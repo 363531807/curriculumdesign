@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
+import android.widget.RatingBar;
 import android.widget.TextView;
 
 import java.util.List;
@@ -23,12 +24,6 @@ public class CourseExpanListAdapter extends BaseExpandableListAdapter{
         mChild =child;
         mContext = context;
     }
-    public void updateList(List<Map> group,List<List<Map>> child){
-        mMapList = group;
-        mChild =child;
-        notifyDataSetChanged();
-    }
-
 
     @Override
     public int getGroupCount() {
@@ -82,6 +77,8 @@ public class CourseExpanListAdapter extends BaseExpandableListAdapter{
             mHolder.leave_num = (TextView)convertView.findViewById(R.id.tv_leave_num);
             mHolder.late_num = (TextView)convertView.findViewById(R.id.tv_late_num);
             mHolder.classes = (TextView)convertView.findViewById(R.id.tv_course_class);
+            mHolder.leave_apply = (TextView)convertView.findViewById(R.id.tv_group_asfing);
+            mHolder.mRatingBar = (RatingBar)convertView.findViewById(R.id.rb_group_rate);
             convertView.setTag(mHolder);
         }else mHolder = (ViewGroupHolder)convertView.getTag();
         Map<String,String> _map =  mMapList.get(groupPosition);
@@ -100,7 +97,8 @@ public class CourseExpanListAdapter extends BaseExpandableListAdapter{
         mHolder.ontime_num.setText(_map.get("ontime_num"));
         mHolder.leave_num.setText(_map.get("leave_num"));
         mHolder.late_num.setText(_map.get("late_num"));
-
+        mHolder.leave_apply.setText(_map.get("leave_applying_num"));
+        mHolder.mRatingBar.setRating(Float.parseFloat(_map.get("rate_result")));
         return convertView;
     }
 
@@ -134,7 +132,10 @@ public class CourseExpanListAdapter extends BaseExpandableListAdapter{
                     _signtye = "请假";
                     break;
                 case 4:
-                    _signtye = "缺勤";
+                    _signtye = "请假申请中";
+                    break;
+                case 5:
+                    _signtye = "请假失败";
                     break;
             }
             viewChildHolder.signType.setText(_signtye);
@@ -163,6 +164,8 @@ public class CourseExpanListAdapter extends BaseExpandableListAdapter{
         TextView leave_num;
         TextView late_num;
         TextView classes;
+        RatingBar mRatingBar;
+        TextView leave_apply;
     }
     class ViewChildHolder{
         TextView student_name;

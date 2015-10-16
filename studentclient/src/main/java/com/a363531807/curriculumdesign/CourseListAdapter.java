@@ -20,10 +20,6 @@ public class CourseListAdapter extends BaseAdapter{
         mMapList = list;
         mContext = context;
     }
-    public void updateList(List list){
-        mMapList =list;
-        notifyDataSetChanged();
-    }
     @Override
     public int getCount() {
         return mMapList.size();

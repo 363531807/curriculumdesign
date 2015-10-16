@@ -35,10 +35,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity
+public class TeacherClientActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener{
-    public static final String HOST="http://registersystem.sinaapp.com/registersystem/";
-   // public static final String HOST="http://10.10.164.194:8000/registersystem/";
+    //public static final String HOST="http://registersystem.sinaapp.com/registersystem/";
+    public static final String HOST="http://10.10.164.197:8000/registersystem/";
     public static final String TAG ="stqbill";
     public static final String USER_TYPE  = "1"; //1代表教师；
     private String mAccount;
@@ -72,9 +72,9 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         TextView _user_name = (TextView)findViewById(R.id.tv_user_name);
-        _user_name.setText("我的名字");
+        _user_name.setText(getIntent().getStringExtra("name"));
         TextView  _user_sign = (TextView)findViewById(R.id.tv_user_sign);
-        _user_sign.setText("我的签名");
+        _user_sign.setText(getIntent().getStringExtra("sign"));
         mSwipeRefreshLayout = (SwipeRefreshLayout)findViewById(R.id.swipe_content_main);
         //设置刷新时动画的颜色，可以设置4个
         mSwipeRefreshLayout.setColorSchemeResources(android.R.color.holo_blue_light, android.R.color.holo_red_light, android.R.color.holo_orange_light, android.R.color.holo_green_light);
@@ -117,6 +117,14 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == 123){
+            getResoursefromInternet();
+        }
+    }
+
+    @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
        ExpandableListView.ExpandableListContextMenuInfo _info = (ExpandableListView.ExpandableListContextMenuInfo)
                 menuInfo;
@@ -143,8 +151,11 @@ public class MainActivity extends AppCompatActivity
             menu.add(Menu.NONE,2,Menu.NONE,"生成迟到随机码")
             .setIntent(laintent);
         }
-        menu.add(Menu.NONE,3,Menu.NONE,"处理请假申请");
-        menu.add(Menu.NONE, 4, Menu.NONE, "缺勤名单");
+        if(Integer.parseInt(map.get("leave_applying_num"))>0){
+            menu.add(Menu.NONE, 3, Menu.NONE, "处理请假申请");
+        }
+        if (Integer.parseInt(map.get("unsign_total"))>0)
+            menu.add(Menu.NONE, 4, Menu.NONE, "缺勤名单");
     }
 
     @Override
@@ -187,9 +198,16 @@ public class MainActivity extends AppCompatActivity
                     }).start();
                 }
                 return true;
-            case 3:
-                break;
-            case 4:
+            case 3://请假申请
+                showProgressDialog(true,0);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        getASFApplication(position);
+                    }
+                }).start();
+                return true;
+            case 4://缺勤
                 showProgressDialog(true,0);
                 new Thread(new Runnable() {
                     @Override
@@ -198,10 +216,7 @@ public class MainActivity extends AppCompatActivity
                     }
                 }).start();
                 return true;
-            case 5:
-                break;
-            case 6:
-                break;
+
 
         }
         return super.onContextItemSelected(item);
@@ -224,9 +239,7 @@ public class MainActivity extends AppCompatActivity
         // as you specify a parent activity in AndroidManifest.xml.
         //noinspection SimplifiableIfStatement
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
+
         if(id == R.id.action_sign_out ){
             Intent intent = new Intent(this,LoginActivity.class);
             intent.putExtra("auto_login",false);
@@ -241,18 +254,9 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
-
-        if (id == R.id.course_list) {
-
-        } else if (id == R.id.my_site) {
-
-        } else if (id == R.id.myRecord) {
+        if (id == R.id.myRecord) {
 
         } else if (id == R.id.about) {
-
-        } else if (id == R.id.communciated) {
-
-        } else if (id == R.id.share_some) {
 
         }
 
@@ -288,43 +292,63 @@ public class MainActivity extends AppCompatActivity
                     showProgressDialog(false,0);
                     showMsg("更新失败");
                     break;
-                case 1:
-                    if (mListAdapter==null){
-                        mListAdapter=new CourseExpanListAdapter(MainActivity.this,mGroupList,mChildList);
-                        mCourselv.setAdapter(mListAdapter);
-                    }else {
-                        mListAdapter.updateList(mGroupList,mChildList);
-                    }
+                case 1://获取列表
                     if(mSwipeRefreshLayout.isRefreshing()){
                         mSwipeRefreshLayout.setRefreshing(false);
                     }
+                    if (!mGroupList.isEmpty()){
+                        if (mListAdapter==null){
+                            mListAdapter=new CourseExpanListAdapter(TeacherClientActivity.this,mGroupList,mChildList);
+                            mCourselv.setAdapter(mListAdapter);
+                        }else {
+                            mListAdapter.notifyDataSetChanged();
+                        }
+                    }else{
+                        showMsg("没有课程哦");
+                    }
+
                     break;
-                case 2:
+                case 2://随机码
                     showProgressDialog(false, 0);
                     getResoursefromInternet();
                     String random = msg.getData().getString("random");
-                    TextView tv = new TextView(MainActivity.this);
+                    TextView tv = new TextView(TeacherClientActivity.this);
                     tv.setText(random);
                     tv.setTextColor(getResources().getColor(android.R.color.holo_orange_dark));
                     tv.setTextSize(50);
                     tv.setPadding(0,0,0,50);
                     tv.setGravity(Gravity.CENTER);
-                    new AlertDialog.Builder(MainActivity.this)
+                    new AlertDialog.Builder(TeacherClientActivity.this)
                             .setTitle(R.string.show_random_title)
                             .setView(tv)
                             .setMessage(R.string.random_warning)
                             .show();
                     break;
-                case 3:
+                case 3://缺勤名单
                     showProgressDialog(false,0);
-                    List<Map<String,String>> list= (List<Map<String,String>>)msg.getData().getSerializable("unsign_list");
-                    SimpleAdapter adapter = new SimpleAdapter(MainActivity.this,list,
-                            android.R.layout.simple_list_item_2,
-                            new String[]{"student_name","student_number"},
-                            new int[]{android.R.id.text1,android.R.id.text2});
-                    new AlertDialog.Builder(MainActivity.this)
-                            .setAdapter(adapter, null)
-                            .show();
+                    if (msg.arg1==1) {
+                        List<Map<String, String>> list = (List<Map<String, String>>) msg.getData().getSerializable("unsign_list");
+                        SimpleAdapter adapter = new SimpleAdapter(TeacherClientActivity.this, list,
+                                android.R.layout.simple_list_item_2,
+                                new String[]{"student_name", "student_number"},
+                                new int[]{android.R.id.text1, android.R.id.text2});
+                        new AlertDialog.Builder(TeacherClientActivity.this)
+                                .setAdapter(adapter, null)
+                                .show();
+                    }else{
+                        showMsg("没有人缺勤哦！");
+                    }
+                    break;
+                case 4://迟到申请
+                    showProgressDialog(false,0);
+                    if (msg.arg1==1) {
+                        Intent intent =new Intent(TeacherClientActivity.this,AFLListActivity.class);
+                        intent.putExtras(msg.getData());
+                        startActivityForResult(intent, 123);
+                    }else{
+                        showMsg("没有人请假哦！");
+                    }
+                    break;
             }
         }
     }
@@ -342,13 +366,19 @@ public class MainActivity extends AppCompatActivity
             Log.i(TAG,"RESUT  "+_result);
             JSONArray jsarray = new JSONArray(_result);
             if(jsarray.optInt(0)==1){
-                List<Map> grouplist = new ArrayList<>();
-                List<List<Map>> _childmainlist = new ArrayList<>();
+                if (mChildList==null){
+                    mChildList=new ArrayList<>();
+                }else mChildList.clear();
+                if (mGroupList==null){
+                    mGroupList=new ArrayList<>();
+                }else mGroupList.clear();
                 int length = jsarray.length();
+                Map<String,String> _map;
+                Iterator _it;
                 for (int i=1;i<length;i++){
-                    Map<String,String> _map = new HashMap<>();
+                    _map = new HashMap<>();
                     _js =   jsarray.optJSONObject(i);
-                    Iterator _it = _js.keys();
+                    _it = _js.keys();
                     String _key;
                     while (_it.hasNext()){
                         _key = (String)_it.next();
@@ -359,6 +389,7 @@ public class MainActivity extends AppCompatActivity
                         _map.remove("sign_student");
                         List<Map> childlist = new ArrayList<>();
                         int clength =_childarray.length();
+
                         for (int j=0;j<clength;j++){
                             JSONObject chilobj = _childarray.optJSONObject(j);
                             Iterator chilit = chilobj.keys();
@@ -372,12 +403,10 @@ public class MainActivity extends AppCompatActivity
                                 childlist.add(chmap);
                             }
                         }
-                        grouplist.add(_map);
-                        _childmainlist.add(childlist);
+                        mGroupList.add(_map);
+                        mChildList.add(childlist);
                     }
                 }
-                mChildList=_childmainlist;
-                mGroupList=grouplist;
                 mMyHandler.sendEmptyMessage(1);
                 return ;
             }else {
@@ -406,10 +435,12 @@ public class MainActivity extends AppCompatActivity
                 Message msg = new Message();
                 msg.what=2;
                 Bundle bundle = new Bundle();
-                bundle.putString("random",jsonObject.optString("random"));
+                bundle.putString("random", jsonObject.optString("random"));
                 msg.setData(bundle);
                 mMyHandler.sendMessage(msg);
                 return;
+            }else {
+                mMyHandler.sendEmptyMessage(0);
             }
         }catch (Exception e){
             e.printStackTrace();
@@ -432,23 +463,32 @@ public class MainActivity extends AppCompatActivity
                 JSONArray jsonArray = jsonObject.optJSONArray("body");
                 int length = jsonArray.length();
                 List<Map> list = new ArrayList<>();
+                JSONObject js;
+                Map<String,String> map;
+                Iterator<String> it;
+                String key;
                 for (int i=0;i<length;i++){
-                    JSONObject js =jsonArray.optJSONObject(i);
-                    Map<String,String> map = new HashMap<>();
-                    Iterator<String> it = js.keys();
+                    js =jsonArray.optJSONObject(i);
+                    map = new HashMap<>();
+                    it = js.keys();
                     while (it.hasNext()){
-                        String key = it.next();
+                        key = it.next();
                         map.put(key,js.optString(key));
                     }
                     list.add(map);
                 }
                 Message msg = new Message();
-                msg.what=3;
-                Bundle bundle = new Bundle();
-                bundle.putSerializable("unsign_list", (Serializable) list);
-                msg.setData(bundle);
-                mMyHandler.sendMessage(msg);
-            }else if(result.equals("error")){
+                msg.what = 3;
+                if (!list.isEmpty()) {
+                    msg.arg1=1;
+                    Bundle bundle = new Bundle();
+                    bundle.putSerializable("unsign_list", (Serializable) list);
+                    msg.setData(bundle);
+                }else{
+                    msg.arg1=0;
+                }
+               mMyHandler.sendMessage(msg);
+            }else {
                 mMyHandler.sendEmptyMessage(0);
             }
         }catch (Exception e){
@@ -456,6 +496,52 @@ public class MainActivity extends AppCompatActivity
             mMyHandler.sendEmptyMessage(0);
         }
 
+    }
+    public void getASFApplication(int position){
+        String url = HOST+"getleavelist/";
+        try{
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("classing_id",mGroupList.get(position).get("classing_id"));
+            String result = HttpURLProtocol.postjson(url, jsonObject.toString().getBytes());
+            Log.i(TAG,result);
+            jsonObject = new JSONObject(result);
+            if (jsonObject.optBoolean("result")){
+                JSONArray jsonArray = jsonObject.optJSONArray("body");
+                int length = jsonArray.length();
+                List<Map> list = new ArrayList<>();
+                JSONObject js;
+                Map<String,String> map;
+                Iterator<String> it;
+                String key;
+                for (int i=0;i<length;i++){
+                    js =jsonArray.optJSONObject(i);
+                     map = new HashMap<>();
+                     it = js.keys();
+                    while (it.hasNext()){
+                        key = it.next();
+                        map.put(key,js.optString(key));
+                    }
+                    list.add(map);
+                }
+                Message msg = new Message();
+                msg.what = 4;
+                if (!list.isEmpty()) {
+                    msg.arg1=1;
+                    Bundle bundle = new Bundle();
+                    bundle.putSerializable("leave_list", (Serializable) list);
+                    msg.setData(bundle);
+
+                }else{
+                    msg.arg1=0;
+                }
+                mMyHandler.sendMessage(msg);
+            }else{
+                mMyHandler.sendEmptyMessage(0);
+            }
+        }catch (Exception e){
+             e.printStackTrace();
+            mMyHandler.sendEmptyMessage(0);
+        }
     }
 
     void showMsg(String msg){

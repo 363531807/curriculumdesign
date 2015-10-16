@@ -40,10 +40,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity
+public class StuentClientActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
    // public static final String HOST = "http://registersystem.sinaapp.com/registersystem/";
-    public static final String HOST="http://10.10.164.206:8000/registersystem/";
+    public static final String HOST="http://10.10.164.197:8000/registersystem/";
     public static final String TAG = "stqbill";
     public static final String USER_TYPE = "0"; //0代表学生；
     public static final int LOGIN_RESULT_CODE = 11;
@@ -88,9 +88,9 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         TextView _user_name = (TextView) findViewById(R.id.tv_user_name);
-        _user_name.setText("我的名字");
+        _user_name.setText(getIntent().getStringExtra("name"));
         TextView _user_sign = (TextView) findViewById(R.id.tv_user_sign);
-        _user_sign.setText("我的签名");
+        _user_sign.setText(getIntent().getStringExtra("sign"));
         mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_content_main);
         //设置刷新时动画的颜色，可以设置4个
         mSwipeRefreshLayout.setColorSchemeResources(android.R.color.holo_blue_light, android.R.color.holo_red_light, android.R.color.holo_orange_light, android.R.color.holo_green_light);
@@ -163,7 +163,7 @@ public class MainActivity extends AppCompatActivity
         final RatingBar ratingBar;
         switch (item.getItemId()){
             case 1:
-                View _view = LayoutInflater.from(MainActivity.this).inflate(R.layout.sign_dialog_layout, null);
+                View _view = LayoutInflater.from(StuentClientActivity.this).inflate(R.layout.sign_dialog_layout, null);
                 final NumberPicker[] numberPickers = new NumberPicker[4];
                 numberPickers[0] = (NumberPicker) _view.findViewById(R.id.numberPicker1);
                 numberPickers[1] = (NumberPicker) _view.findViewById(R.id.numberPicker2);
@@ -175,7 +175,7 @@ public class MainActivity extends AppCompatActivity
                     picker.setValue(0);
                 }
                 final RadioGroup radioGroup = (RadioGroup) _view.findViewById(R.id.radiogroup_sign);
-                new AlertDialog.Builder(MainActivity.this)
+                new AlertDialog.Builder(StuentClientActivity.this)
                         .setView(_view)
                         .setTitle("请选择签到随机码")
                         .setNegativeButton("取消", null)
@@ -250,7 +250,7 @@ public class MainActivity extends AppCompatActivity
                         .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                    final int result =(int)ratingBar.getRating();
+                                    final float result =ratingBar.getRating();
                                 Log.i(TAG,"RATING"+result);
                                     new Thread(new Runnable() {
                                         @Override
@@ -299,9 +299,7 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
+
         if (id == R.id.action_sign_out) {
             Intent intent = new Intent(this, LoginActivity.class);
             intent.putExtra("auto_login", false);
@@ -317,21 +315,11 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
-
-        if (id == R.id.course_list) {
-
-        } else if (id == R.id.my_site) {
-
-        } else if (id == R.id.myRecord) {
+        if (id == R.id.myRecord) {
 
         } else if (id == R.id.about) {
 
-        } else if (id == R.id.communciated) {
-
-        } else if (id == R.id.share_some) {
-
         }
-
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
@@ -351,10 +339,10 @@ public class MainActivity extends AppCompatActivity
                     break;
                 case 1:
                     if (mListAdapter == null) {
-                        mListAdapter = new CourseListAdapter(MainActivity.this, mCourseList);
+                        mListAdapter = new CourseListAdapter(StuentClientActivity.this, mCourseList);
                         mCourselv.setAdapter(mListAdapter);
                     } else {
-                        mListAdapter.updateList(mCourseList);
+                        mListAdapter.notifyDataSetChanged();
                     }
                     if (mSwipeRefreshLayout.isRefreshing()) {
                         mSwipeRefreshLayout.setRefreshing(false);
@@ -427,7 +415,6 @@ public class MainActivity extends AppCompatActivity
     public void getCourseList() {
         String _url = HOST + "getcourselist/";
         try {
-            List _resultlist = new ArrayList();
             JSONObject _js = new JSONObject();
             _js.put("account", mAccount);
             String _result = HttpURLProtocol.postjson(_url, _js.toString().getBytes());
@@ -436,6 +423,9 @@ public class MainActivity extends AppCompatActivity
             }
             JSONArray _jsarray = new JSONArray(_result);
             if (_jsarray.optString(0).equals("ok")) {
+                if (mCourseList==null){
+                    mCourseList = new ArrayList();
+                }else mCourseList.clear();
                 int length = _jsarray.length();
                 for (int i = 1; i < length; i++) {
                     Map _map = new HashMap();
@@ -447,10 +437,9 @@ public class MainActivity extends AppCompatActivity
                         _map.put(_key, _js.optString(_key));
                     }
                     if (!_map.isEmpty()) {
-                        _resultlist.add(_map);
+                        mCourseList.add(_map);
                     }
                 }
-                mCourseList = _resultlist;
                 mMyHandler.sendEmptyMessage(1);
                 return;
             }
@@ -510,7 +499,7 @@ public class MainActivity extends AppCompatActivity
             mMyHandler.sendEmptyMessage(4);
         }
     }
-    public void rateforcourse(int position,int rate){
+    public void rateforcourse(int position,float rate){
         String url = HOST+"rateforcourse/";
         try{
             JSONObject jsonObject = new JSONObject();
