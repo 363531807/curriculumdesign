@@ -38,7 +38,7 @@ import java.util.Map;
 public class TeacherClientActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener{
     //public static final String HOST="http://registersystem.sinaapp.com/registersystem/";
-    public static final String HOST="http://10.10.164.208:8000/registersystem/";
+    public static final String HOST="http://10.10.164.205:8000/registersystem/";
     public static final String TAG ="stqbill";
     public static final String USER_TYPE  = "1"; //1代表教师；
     private String mAccount;
