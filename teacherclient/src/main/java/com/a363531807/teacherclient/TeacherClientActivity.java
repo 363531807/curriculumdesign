@@ -1,5 +1,6 @@
 package com.a363531807.teacherclient;
 
+import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -14,12 +15,12 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.DatePicker;
 import android.widget.ExpandableListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
@@ -29,7 +30,10 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -49,12 +53,22 @@ public class TeacherClientActivity extends AppCompatActivity
     private MyHandler mMyHandler;
     private ProgressDialog mProgressDialog;
     private SwipeRefreshLayout  mSwipeRefreshLayout;
+    private boolean mFilter=true;
+    private int mYear;
+    private int mMonth;
+    private int mDate;
+    private MenuItem mCal;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mAccount=getIntent().getStringExtra("account");
         mMyHandler = new MyHandler();
+        Calendar calendar =Calendar.getInstance();
+        mYear=calendar.get(Calendar.YEAR);
+        mMonth=calendar.get(Calendar.MONTH)+1;
+        mDate = calendar.get(Calendar.DATE);
         initView();
         getResoursefromInternet();
 
@@ -64,7 +78,7 @@ public class TeacherClientActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+        final ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
@@ -84,7 +98,9 @@ public class TeacherClientActivity extends AppCompatActivity
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        getCourseList();
+                        synchronized (this){
+                            getCourseList(mFilter,mYear,mMonth,mDate);
+                        }
                     }
                 }).start();
             }
@@ -100,7 +116,9 @@ public class TeacherClientActivity extends AppCompatActivity
         new Thread(new Runnable() {
             @Override
             public void run() {
-                getCourseList();
+                synchronized (this){
+                    getCourseList(mFilter,mYear,mMonth,mDate);
+                }
             }
         }).start();
     }
@@ -229,6 +247,10 @@ public class TeacherClientActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        mCal =menu.getItem(0);
+        GregorianCalendar calendar =new GregorianCalendar(mYear,mMonth-1,mDate);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd EEEE");
+        mCal.setTitle(simpleDateFormat.format(calendar.getTime()));
         return true;
     }
 
@@ -245,6 +267,32 @@ public class TeacherClientActivity extends AppCompatActivity
             intent.putExtra("auto_login",false);
             startActivity(intent);
             finish();
+        }else if (id == R.id.action_calenda_menu){
+            new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
+                @Override
+                public void onDateSet(DatePicker view,int year,int monthOfYear,int dayOfMonth) {
+                    mYear=year;
+                    mMonth =monthOfYear+1;
+                    mDate = dayOfMonth;
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            synchronized (this){
+                                getCourseList(true,mYear,mMonth,mDate);
+                            }
+                        }
+                    }).start();
+                }
+            }, mYear, mMonth-1,mDate).show();
+        }else if (id ==R.id.action_calenda_all_menu){
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    synchronized (this){
+                        getCourseList(false,mYear,mMonth,mDate);
+                    }
+                }
+            }).start();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -303,6 +351,14 @@ public class TeacherClientActivity extends AppCompatActivity
                         mSwipeRefreshLayout.setRefreshing(false);
                     }
                     if (!mGroupList.isEmpty()){
+                        if (mFilter==true){
+                            GregorianCalendar calendar =new GregorianCalendar(mYear,mMonth-1,mDate);
+                            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd EEEE");
+                            mCal.setTitle(simpleDateFormat.format(calendar.getTime()));
+                        }else {
+                            mCal.setTitle("全部");
+                        }
+
                         if (mListAdapter==null){
                             mListAdapter=new CourseExpanListAdapter(TeacherClientActivity.this,mGroupList,mChildList);
                             mCourselv.setAdapter(mListAdapter);
@@ -369,17 +425,22 @@ public class TeacherClientActivity extends AppCompatActivity
         }
     }
 
-    public void getCourseList(){
+    public void getCourseList(boolean filter,int year,int month,int date){
         String _url = HOST+"getteachlist/";
         try {
             JSONObject _js = new JSONObject();
             _js.put("account", mAccount);
+            _js.put("filter",filter);
+            if (filter){
+                _js.put("year",year);
+                _js.put("month", month);
+                _js.put("date", date);
+            }
             String _result= HttpURLProtocol.postjson(_url, _js.toString().getBytes());
             if (_result.equals("error")){
                 mMyHandler.sendEmptyMessage(0);
                 return;
             }
-            Log.i(TAG,"RESUT  "+_result);
             JSONArray jsarray = new JSONArray(_result);
             if(jsarray.optInt(0)==1){
                 if (mChildList==null){
@@ -405,7 +466,6 @@ public class TeacherClientActivity extends AppCompatActivity
                         _map.remove("sign_student");
                         List<Map> childlist = new ArrayList<>();
                         int clength =_childarray.length();
-
                         for (int j=0;j<clength;j++){
                             JSONObject chilobj = _childarray.optJSONObject(j);
                             Iterator chilit = chilobj.keys();
@@ -423,6 +483,7 @@ public class TeacherClientActivity extends AppCompatActivity
                         mChildList.add(childlist);
                     }
                 }
+                mFilter =filter;
                 mMyHandler.sendEmptyMessage(1);
                 return ;
             }else {
@@ -441,7 +502,6 @@ public class TeacherClientActivity extends AppCompatActivity
             jsonObject.put("classing_id", "" + mGroupList.get(position).get("classing_id"));
             jsonObject.put("set_type", type);
             String result = HttpURLProtocol.postjson(url,jsonObject.toString().getBytes());
-            Log.i(TAG,"setrandom   "+result);
             if (result.equals("error")){
                 mMyHandler.sendEmptyMessage(0);
                 return;
@@ -469,7 +529,7 @@ public class TeacherClientActivity extends AppCompatActivity
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("classing_id",mGroupList.get(position).get("classing_id"));
             String result = HttpURLProtocol.postjson(url,jsonObject.toString().getBytes());
-            Log.i(TAG,"getunsign"+result);
+
             if (result.equals("error")){
                 mMyHandler.sendEmptyMessage(0);
                 return;
@@ -517,9 +577,8 @@ public class TeacherClientActivity extends AppCompatActivity
         String url = HOST+"getleavelist/";
         try{
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("classing_id",mGroupList.get(position).get("classing_id"));
+            jsonObject.put("classing_id", mGroupList.get(position).get("classing_id"));
             String result = HttpURLProtocol.postjson(url, jsonObject.toString().getBytes());
-            Log.i(TAG,result);
             jsonObject = new JSONObject(result);
             if (jsonObject.optBoolean("result")){
                 JSONArray jsonArray = jsonObject.optJSONArray("body");

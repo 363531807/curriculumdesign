@@ -1,6 +1,7 @@
 package com.a363531807.studentclient;
 
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -16,13 +17,13 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.NumberPicker;
@@ -35,7 +36,10 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -57,6 +61,11 @@ public class StudentClientActivity extends AppCompatActivity
     private ProgressDialog mProgressDialog;
     private MyHandler mMyHandler;
     private SwipeRefreshLayout mSwipeRefreshLayout;
+    private boolean mFilter=true;
+    private int mYear;
+    private int mMonth;
+    private int mDate;
+    private MenuItem mCal;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +73,6 @@ public class StudentClientActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         mAccount = getIntent().getStringExtra("account");
         mMyHandler = new MyHandler();
-        Log.i(TAG, mAccount);
         TelephonyManager _te = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         mIMEI = _te.getDeviceId();
         mIMSI = _te.getSubscriberId();
@@ -72,6 +80,10 @@ public class StudentClientActivity extends AppCompatActivity
             Toast.makeText(this, "请检查您的SIM卡是否插入", Toast.LENGTH_LONG).show();
             finish();
         }
+        Calendar calendar =Calendar.getInstance();
+        mYear=calendar.get(Calendar.YEAR);
+        mMonth=calendar.get(Calendar.MONTH)+1;
+        mDate = calendar.get(Calendar.DATE);
         initView();
         getResoursefromInternet();
     }
@@ -101,8 +113,8 @@ public class StudentClientActivity extends AppCompatActivity
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        synchronized (this) {
-                            getCourseList();
+                        synchronized (this){
+                            getCourseList(mFilter,mYear,mMonth,mDate);
                         }
                     }
                 }).start();
@@ -252,7 +264,7 @@ public class StudentClientActivity extends AppCompatActivity
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                     final float result =ratingBar.getRating();
-                                Log.i(TAG,"RATING"+result);
+
                                     new Thread(new Runnable() {
                                         @Override
                                         public void run() {
@@ -289,6 +301,10 @@ public class StudentClientActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        mCal =menu.getItem(0);
+        GregorianCalendar calendar =new GregorianCalendar(mYear,mMonth-1,mDate);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd EEEE");
+        mCal.setTitle(simpleDateFormat.format(calendar.getTime()));
         return true;
     }
 
@@ -306,6 +322,32 @@ public class StudentClientActivity extends AppCompatActivity
             intent.putExtra("auto_login", false);
             startActivity(intent);
             finish();
+        }else if (id == R.id.action_calenda_menu){
+            new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
+                @Override
+                public void onDateSet(DatePicker view,int year,int monthOfYear,int dayOfMonth) {
+                    mYear=year;
+                    mMonth =monthOfYear+1;
+                    mDate = dayOfMonth;
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            synchronized (this){
+                                getCourseList(true,mYear,mMonth,mDate);
+                            }
+                        }
+                    }).start();
+                }
+            }, mYear, mMonth-1,mDate).show();
+        }else if (id ==R.id.action_calenda_all_menu){
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    synchronized (this){
+                        getCourseList(false,mYear,mMonth,mDate);
+                    }
+                }
+            }).start();
         }
 
         return super.onOptionsItemSelected(item);
@@ -324,7 +366,7 @@ public class StudentClientActivity extends AppCompatActivity
                     getMyRecord();
                 }
             }).start();
-        } else if (id == R.id.about) {
+        }else if (id == R.id.about) {
 
         }
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -345,6 +387,13 @@ public class StudentClientActivity extends AppCompatActivity
                     showMsg("更新失败");
                     break;
                 case 1:
+                    if (mFilter==true){
+                        GregorianCalendar calendar =new GregorianCalendar(mYear,mMonth-1,mDate);
+                        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd EEEE");
+                        mCal.setTitle(simpleDateFormat.format(calendar.getTime()));
+                    }else {
+                        mCal.setTitle("全部");
+                    }
                     if (mListAdapter == null) {
                         mListAdapter = new CourseListAdapter(StudentClientActivity.this, mCourseList);
                         mCourselv.setAdapter(mListAdapter);
@@ -421,18 +470,24 @@ public class StudentClientActivity extends AppCompatActivity
         new Thread(new Runnable() {
             @Override
             public void run() {
-                synchronized (this) {
-                    getCourseList();
+                synchronized (this){
+                    getCourseList(mFilter,mYear,mMonth,mDate);
                 }
             }
         }).start();
     }
 
-    public void getCourseList() {
+    public void getCourseList(boolean filter,int year,int month,int date) {
         String _url = HOST + "getcourselist/";
         try {
             JSONObject _js = new JSONObject();
             _js.put("account", mAccount);
+            _js.put("filter",filter);
+            if (filter){
+                _js.put("year",year);
+                _js.put("month", month);
+                _js.put("date", date);
+            }
             String _result = HttpURLProtocol.postjson(_url, _js.toString().getBytes());
             if (_result.equals("error")) {
                 mMyHandler.sendEmptyMessage(0);
@@ -456,6 +511,7 @@ public class StudentClientActivity extends AppCompatActivity
                         mCourseList.add(_map);
                     }
                 }
+                mFilter =filter;
                 mMyHandler.sendEmptyMessage(1);
                 return;
             }

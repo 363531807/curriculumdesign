@@ -5,7 +5,7 @@
         <item
             android:id="@+id/myRecord"
             android:icon="@android:drawable/ic_menu_save"
-            android:title="我的记录"/>
+            android:title="我的资料"/>
         <item
             android:id="@+id/about"
             android:icon="@android:drawable/ic_menu_more"
