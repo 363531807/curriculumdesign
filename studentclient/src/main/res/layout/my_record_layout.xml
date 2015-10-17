@@ -1,7 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="match_parent">
 
-</LinearLayout>
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:src="@android:drawable/sym_def_app_icon"
+        android:id="@+id/imageView2"
+        android:layout_marginTop="60dp"
+        android:layout_alignParentTop="true" android:layout_centerHorizontal="true"/>
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:padding="20sp"
+        android:layout_height="match_parent" android:layout_below="@+id/imageView2"
+        android:layout_centerHorizontal="true" android:layout_marginTop="10dp">
+        <TextView android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:id="@+id/tv_my_name"
+                  android:text="我的名字"
+                  android:gravity="center"
+                  android:textColor="@android:color/primary_text_light"
+                  android:textSize="35sp"
+            />
+        <TextView android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:id="@+id/tv_my_sign"
+                  android:text="我的签名"
+                  android:gravity="center"
+                  android:textSize="30sp"
+                  android:textColor="@android:color/secondary_text_light"
+            />
+        <LinearLayout android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:orientation="horizontal">
+
+            <TextView android:layout_width="0dp"
+                      android:layout_height="wrap_content"
+                      android:layout_weight="2"
+                      android:text="已上课程数："
+                />
+            <TextView android:layout_width="0dp"
+                      android:layout_height="wrap_content"
+                      android:id="@+id/tv_course_total_num"
+                      android:layout_weight="1"
+                      android:text="课程书"
+                />
+            <TextView android:layout_width="0dp"
+                      android:layout_height="wrap_content"
+                      android:layout_weight="2"
+                      android:text="未上课程数："
+                />
+            <TextView android:layout_width="0dp"
+                      android:layout_height="wrap_content"
+                      android:id="@+id/tv_course_untotal_num"
+                      android:layout_weight="1"
+                      android:text="课程书"
+                />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:orientation="horizontal">
+
+            <TextView android:layout_width="0dp"
+                      android:layout_height="wrap_content"
+                      android:layout_weight="2"
+                      android:text="按时上课："
+                />
+            <TextView android:layout_width="0dp"
+                      android:layout_height="wrap_content"
+                      android:id="@+id/tv_course_total_ontime"
+                      android:layout_weight="1"
+                      android:text="课程书"
+                />
+            <TextView android:layout_width="0dp"
+                      android:layout_height="wrap_content"
+                      android:layout_weight="2"
+                      android:text="迟到："
+                />
+            <TextView android:layout_width="0dp"
+                      android:layout_height="wrap_content"
+                      android:id="@+id/tv_course_total_late"
+                      android:layout_weight="1"
+                      android:text="课程书"
+                />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:orientation="horizontal">
+
+            <TextView android:layout_width="0dp"
+                      android:layout_height="wrap_content"
+                      android:layout_weight="2"
+                      android:text="请假："
+                />
+            <TextView android:layout_width="0dp"
+                      android:layout_height="wrap_content"
+                      android:id="@+id/tv_course_total_asf"
+                      android:layout_weight="1"
+                      android:text="课程书"
+                />
+            <TextView android:layout_width="0dp"
+                      android:layout_height="wrap_content"
+                      android:layout_weight="2"
+                      android:text="旷课："
+                />
+            <TextView android:layout_width="0dp"
+                      android:layout_height="wrap_content"
+                      android:id="@+id/tv_course_total_unsign"
+                      android:layout_weight="1"
+                      android:text="课程书"
+                />
+        </LinearLayout>
+
+
+    </LinearLayout>
+</RelativeLayout>

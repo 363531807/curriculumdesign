@@ -34,16 +34,17 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class StuentClientActivity extends AppCompatActivity
+public class StudentClientActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
    // public static final String HOST = "http://registersystem.sinaapp.com/registersystem/";
-    public static final String HOST="http://10.10.164.197:8000/registersystem/";
+    public static final String HOST="http://10.10.164.208:8000/registersystem/";
     public static final String TAG = "stqbill";
     public static final String USER_TYPE = "0"; //0代表学生；
     public static final int LOGIN_RESULT_CODE = 11;
@@ -163,7 +164,7 @@ public class StuentClientActivity extends AppCompatActivity
         final RatingBar ratingBar;
         switch (item.getItemId()){
             case 1:
-                View _view = LayoutInflater.from(StuentClientActivity.this).inflate(R.layout.sign_dialog_layout, null);
+                View _view = LayoutInflater.from(StudentClientActivity.this).inflate(R.layout.sign_dialog_layout, null);
                 final NumberPicker[] numberPickers = new NumberPicker[4];
                 numberPickers[0] = (NumberPicker) _view.findViewById(R.id.numberPicker1);
                 numberPickers[1] = (NumberPicker) _view.findViewById(R.id.numberPicker2);
@@ -175,7 +176,7 @@ public class StuentClientActivity extends AppCompatActivity
                     picker.setValue(0);
                 }
                 final RadioGroup radioGroup = (RadioGroup) _view.findViewById(R.id.radiogroup_sign);
-                new AlertDialog.Builder(StuentClientActivity.this)
+                new AlertDialog.Builder(StudentClientActivity.this)
                         .setView(_view)
                         .setTitle("请选择签到随机码")
                         .setNegativeButton("取消", null)
@@ -316,7 +317,13 @@ public class StuentClientActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
         if (id == R.id.myRecord) {
-
+            showProgressDialog(true,0);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    getMyRecord();
+                }
+            }).start();
         } else if (id == R.id.about) {
 
         }
@@ -339,7 +346,7 @@ public class StuentClientActivity extends AppCompatActivity
                     break;
                 case 1:
                     if (mListAdapter == null) {
-                        mListAdapter = new CourseListAdapter(StuentClientActivity.this, mCourseList);
+                        mListAdapter = new CourseListAdapter(StudentClientActivity.this, mCourseList);
                         mCourselv.setAdapter(mListAdapter);
                     } else {
                         mListAdapter.notifyDataSetChanged();
@@ -394,7 +401,16 @@ public class StuentClientActivity extends AppCompatActivity
                     getResoursefromInternet();
                     showMsg("评分成功");
                     break;
-
+                case 8:
+                    showProgressDialog(false, 0);
+                    Intent intent =new Intent(StudentClientActivity.this,MyRecordActivity.class);
+                    intent.putExtras(msg.getData());
+                    startActivity(intent);
+                    break;
+                case 9:
+                    showProgressDialog(false, 0);
+                    showMsg("获取数据失败，请重试！");
+                    break;
             }
         }
     }
@@ -489,7 +505,7 @@ public class StuentClientActivity extends AppCompatActivity
                 jsonObject.put("account",mAccount);
             }
             jsonObject.put("leave_reason",reason);
-            String result = HttpURLProtocol.postjson(url,jsonObject.toString().getBytes());
+            String result = HttpURLProtocol.postjson(url, jsonObject.toString().getBytes());
             jsonObject = new JSONObject(result);
             if (jsonObject.optBoolean("result")){
                 mMyHandler.sendEmptyMessage(5);
@@ -518,6 +534,37 @@ public class StuentClientActivity extends AppCompatActivity
         }catch (Exception e){
             e.printStackTrace();
             mMyHandler.sendEmptyMessage(6);
+        }
+    }
+
+    public void getMyRecord(){
+        String url = HOST+"getstudentrecord/";
+        try{
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("account",mAccount);
+            String result = HttpURLProtocol.postjson(url, jsonObject.toString().getBytes());
+            jsonObject = new JSONObject(result);
+            if (jsonObject.optBoolean("result")) {
+                JSONObject object = jsonObject.optJSONObject("body");
+                Iterator<String> iterator =object.keys();
+                String key;
+                Map<String,String> map =new HashMap<>();
+                while (iterator.hasNext()){
+                    key=iterator.next();
+                    map.put(key,object.optString(key));
+                }
+                Message msg = new Message();
+                Bundle data = new Bundle();
+                data.putSerializable("result", (Serializable) map);
+                msg.setData(data);
+                msg.what = 8;
+                mMyHandler.sendMessage(msg);
+                return;
+            }
+            mMyHandler.sendEmptyMessage(9);
+        }catch (Exception e){
+            e.printStackTrace();
+            mMyHandler.sendEmptyMessage(9);
         }
     }
 

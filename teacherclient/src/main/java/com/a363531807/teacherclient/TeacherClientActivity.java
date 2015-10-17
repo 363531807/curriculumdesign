@@ -38,7 +38,7 @@ import java.util.Map;
 public class TeacherClientActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener{
     //public static final String HOST="http://registersystem.sinaapp.com/registersystem/";
-    public static final String HOST="http://10.10.164.197:8000/registersystem/";
+    public static final String HOST="http://10.10.164.208:8000/registersystem/";
     public static final String TAG ="stqbill";
     public static final String USER_TYPE  = "1"; //1代表教师；
     private String mAccount;
@@ -255,7 +255,13 @@ public class TeacherClientActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
         if (id == R.id.myRecord) {
-
+            showProgressDialog(true,0);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    getMyRecord();
+                }
+            }).start();
         } else if (id == R.id.about) {
 
         }
@@ -348,6 +354,16 @@ public class TeacherClientActivity extends AppCompatActivity
                     }else{
                         showMsg("没有人请假哦！");
                     }
+                    break;
+                case 5:
+                    showProgressDialog(false, 0);
+                    Intent intent =new Intent(TeacherClientActivity.this,MyRecordActivity.class);
+                    intent.putExtras(msg.getData());
+                    startActivity(intent);
+                    break;
+                case 6:
+                    showProgressDialog(false, 0);
+                    showMsg("获取数据失败，请重试！");
                     break;
             }
         }
@@ -544,6 +560,36 @@ public class TeacherClientActivity extends AppCompatActivity
         }
     }
 
+    public void getMyRecord(){
+        String url = HOST+"getteacherrecord/";
+        try{
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("account", mAccount);
+            String result = HttpURLProtocol.postjson(url, jsonObject.toString().getBytes());
+            jsonObject = new JSONObject(result);
+            if (jsonObject.optBoolean("result")) {
+                JSONObject object = jsonObject.optJSONObject("body");
+                Iterator<String> iterator =object.keys();
+                String key;
+                Map<String,String> map =new HashMap<>();
+                while (iterator.hasNext()){
+                    key=iterator.next();
+                    map.put(key,object.optString(key));
+                }
+                Message msg = new Message();
+                Bundle data = new Bundle();
+                data.putSerializable("result", (Serializable) map);
+                msg.setData(data);
+                msg.what = 5;
+                mMyHandler.sendMessage(msg);
+                return;
+            }
+            mMyHandler.sendEmptyMessage(6);
+        }catch (Exception e){
+            e.printStackTrace();
+            mMyHandler.sendEmptyMessage(6);
+        }
+    }
     void showMsg(String msg){
         Toast.makeText(this,msg,Toast.LENGTH_SHORT).show();
     }

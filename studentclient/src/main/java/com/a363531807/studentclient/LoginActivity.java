@@ -261,9 +261,9 @@ public class LoginActivity extends AppCompatActivity {
         protected Boolean doInBackground(Void... params) {
             // TODO: attempt authentication against a network service.
             try {
-               String url= StuentClientActivity.HOST+"login/";
+               String url= StudentClientActivity.HOST+"login/";
                 Map _map = new HashMap();
-                _map.put("login_type", StuentClientActivity.USER_TYPE);
+                _map.put("login_type", StudentClientActivity.USER_TYPE);
                 _map.put("number", mAccount);
                 _map.put("password", mPassword);
                 mresult = HttpURLProtocol.sendpostrequest(url,_map);
@@ -286,7 +286,7 @@ public class LoginActivity extends AppCompatActivity {
                     JSONObject object = new JSONObject(mresult);
                     switch (object.optInt("result")){
                         case 0:
-                            Intent _intent = new Intent(LoginActivity.this,StuentClientActivity.class);
+                            Intent _intent = new Intent(LoginActivity.this,StudentClientActivity.class);
                             _intent.putExtra("account",mAccount);
                             _intent.putExtra("name",object.optString("name"));
                             _intent.putExtra("sign",object.optString("sign"));
