@@ -7,12 +7,9 @@
             android:orderInCategory="100"
             app:showAsAction="always|withText"/>
 
-      <item android:id="@+id/action_calenda_all_menu"
-            android:title="全部课程"
-            android:orderInCategory="100"
-            app:showAsAction="never"/>
+
       <item android:id="@+id/action_sign_out"
             android:title="@string/action_sign_out"
             android:orderInCategory="100"
-            app:showAsAction="never"/>
+            app:showAsAction="ifRoom"/>
 </menu>

@@ -47,11 +47,10 @@ import java.util.Map;
 
 public class StudentClientActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
-   // public static final String HOST = "http://registersystem.sinaapp.com/registersystem/";
-    public static final String HOST="http://10.10.164.205:8000/registersystem/";
+    public static final String HOST = "http://registersystem.sinaapp.com/registersystem/";
+    //public static final String HOST="http://10.10.164.206:8000/registersystem/";
     public static final String TAG = "stqbill";
     public static final String USER_TYPE = "0"; //0代表学生；
-    public static final int LOGIN_RESULT_CODE = 11;
     private String mIMEI;
     private String mIMSI;
     private String mAccount;
@@ -339,15 +338,6 @@ public class StudentClientActivity extends AppCompatActivity
                     }).start();
                 }
             }, mYear, mMonth-1,mDate).show();
-        }else if (id ==R.id.action_calenda_all_menu){
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    synchronized (this){
-                        getCourseList(false,mYear,mMonth,mDate);
-                    }
-                }
-            }).start();
         }
 
         return super.onOptionsItemSelected(item);

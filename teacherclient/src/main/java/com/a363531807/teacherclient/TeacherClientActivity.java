@@ -41,8 +41,8 @@ import java.util.Map;
 
 public class TeacherClientActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener{
-    //public static final String HOST="http://registersystem.sinaapp.com/registersystem/";
-    public static final String HOST="http://10.10.164.205:8000/registersystem/";
+    public static final String HOST="http://registersystem.sinaapp.com/registersystem/";
+    //public static final String HOST="http://10.10.164.205:8000/registersystem/";
     public static final String TAG ="stqbill";
     public static final String USER_TYPE  = "1"; //1代表教师；
     private String mAccount;
@@ -284,15 +284,6 @@ public class TeacherClientActivity extends AppCompatActivity
                     }).start();
                 }
             }, mYear, mMonth-1,mDate).show();
-        }else if (id ==R.id.action_calenda_all_menu){
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    synchronized (this){
-                        getCourseList(false,mYear,mMonth,mDate);
-                    }
-                }
-            }).start();
         }
         return super.onOptionsItemSelected(item);
     }
